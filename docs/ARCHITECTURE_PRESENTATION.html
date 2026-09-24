@@ -1,0 +1,921 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Samagra — Architecture Presentation</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Sans+Devanagari:wght@500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink-900:#0F1B2D; --ink-800:#16243A; --ink-700:#1E2F49;
+    --paper:#FBF7EC; --paper-line:#E4DEC9;
+    --marigold:#E8A33D; --marigold-deep:#C9812B; --brass:#8A6B33;
+    --ivory:#F4EFE2; --ink-text:#1D2433; --muted:#93A0B5; --muted-ink:#8A8271;
+    --line-dark: rgba(244,239,226,0.16);
+    --good:#5FAE72; --warn:#D9714E;
+  }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; height:100%; overflow:hidden; }
+  body{ font-family:'IBM Plex Sans', sans-serif; background:var(--ink-900); }
+  h1,h2,h3{ font-family:'Fraunces', serif; font-weight:600; margin:0; }
+  .devanagari{ font-family:'IBM Plex Sans Devanagari', sans-serif; }
+  .mono{ font-family:'IBM Plex Mono', monospace; }
+
+  section.slide{
+    height:100vh; width:100%; padding:52px 68px;
+    display:flex; flex-direction:column; justify-content:center;
+    position:absolute; inset:0; background:var(--ink-900); color:var(--ivory);
+    background-image:
+      linear-gradient(rgba(232,163,61,0.055) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(232,163,61,0.055) 1px, transparent 1px);
+    background-size:36px 36px;
+    overflow:hidden;
+    opacity:0; visibility:hidden; transform:translateX(24px);
+    transition:opacity 0.45s ease, transform 0.45s ease, visibility 0.45s;
+    z-index:1;
+  }
+  section.slide.active{ opacity:1; visibility:visible; transform:translateX(0); z-index:2; }
+  section.slide.leaving{ transform:translateX(-24px); }
+  section.slide.paper{
+    background-color:var(--paper); color:var(--ink-text);
+    background-image:linear-gradient(rgba(138,107,51,0.07) 1px, transparent 1px), linear-gradient(90deg, rgba(138,107,51,0.07) 1px, transparent 1px);
+  }
+
+  .deck-nav{
+    position:fixed; top:50%; right:26px; transform:translateY(-50%); z-index:20;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px;
+    font-family:'IBM Plex Mono', monospace;
+  }
+  .deck-nav button{
+    appearance:none; border:1px solid rgba(244,239,226,0.35); background:rgba(15,27,45,0.72);
+    color:var(--ivory); width:32px; height:32px; border-radius:50%; cursor:pointer;
+    display:flex; align-items:center; justify-content:center; font-size:15px; line-height:1;
+    transition:border-color 0.2s, background 0.2s;
+  }
+  .deck-nav button:hover{ border-color:var(--marigold); background:rgba(15,27,45,0.9); }
+  .deck-nav button:disabled{ opacity:0.3; cursor:default; }
+  .deck-dots{ display:flex; flex-direction:column; gap:6px; padding:6px 0; max-height:38vh; overflow:visible; }
+  .deck-dots .dot{
+    width:7px; height:7px; border-radius:50%; background:rgba(244,239,226,0.3);
+    border:1px solid transparent; cursor:pointer; padding:0; appearance:none;
+    transition:background 0.2s, transform 0.2s;
+  }
+  .deck-dots .dot.active{ background:var(--marigold); transform:scale(1.3); }
+  .deck-count{ font-size:0.62rem; color:var(--muted); letter-spacing:0.06em; }
+
+  .corner{ position:absolute; width:20px; height:20px; border-color:var(--marigold); opacity:0.55; }
+  .c-tl{ top:24px; left:24px; border-top:1px solid; border-left:1px solid; }
+  .c-tr{ top:24px; right:24px; border-top:1px solid; border-right:1px solid; }
+  .c-bl{ bottom:24px; left:24px; border-bottom:1px solid; border-left:1px solid; }
+  .c-br{ bottom:24px; right:24px; border-bottom:1px solid; border-right:1px solid; }
+  .paper .corner{ border-color:var(--brass); opacity:0.4; }
+
+  .brandmark{ position:absolute; top:28px; left:56px; display:flex; align-items:baseline; gap:8px; z-index:3; }
+  .brandmark .m{ font-family:'Fraunces', serif; font-weight:700; font-size:0.95rem; }
+  .brandmark .d{ color:var(--marigold); font-size:0.82rem; }
+  .paper .brandmark .m{ color:var(--ink-900); }
+  .num{ position:absolute; top:28px; right:56px; font-family:'IBM Plex Mono', monospace; font-size:0.68rem; color:var(--muted); z-index:3; }
+  .paper .num{ color:var(--muted-ink); }
+
+  .head{ text-align:center; margin-bottom:4px; z-index:3; position:relative; }
+  .eyebrow{ font-family:'IBM Plex Mono', monospace; font-size:0.68rem; letter-spacing:0.12em; text-transform:uppercase; color:var(--marigold); margin-bottom:8px; }
+  h2.title{ font-size:1.7rem; }
+  .paper h2.title{ color:var(--ink-900); }
+  p.lead{ font-size:0.82rem; color:var(--muted); max-width:620px; margin:8px auto 0; line-height:1.5; }
+  .paper p.lead{ color:var(--muted-ink); }
+
+  .body-wrap{ position:relative; z-index:3; margin-top:14px; flex:1; min-height:0; display:flex; flex-direction:column; }
+
+  /* generic node styling shared by svg diagrams */
+  .node-title{ font-family:'IBM Plex Sans', sans-serif; font-weight:600; font-size:12.5px; fill:var(--ivory); }
+  .node-desc{ font-family:'IBM Plex Sans', sans-serif; font-size:10px; fill:var(--muted); }
+  .node-mono{ font-family:'IBM Plex Mono', monospace; font-size:9px; fill:var(--marigold); }
+  .paper .node-title{ fill:var(--ink-900); }
+  .paper .node-desc{ fill:var(--muted-ink); }
+  .badge-ring{ fill:var(--ink-800); stroke:var(--marigold); stroke-width:1.6; }
+  .badge-ring-alt{ fill:var(--ink-700); stroke:var(--brass); stroke-width:1.4; }
+  .box{ fill:var(--ink-800); stroke:var(--marigold); stroke-width:1.4; rx:10; }
+  .box-alt{ fill:#fff; stroke:var(--brass); stroke-width:1.3; rx:10; }
+  .box-muted{ fill:var(--ink-700); stroke:var(--line-dark); stroke-width:1.2; rx:8; }
+  .box-warn{ fill:rgba(217,113,78,0.12); stroke:var(--warn); stroke-width:1.3; rx:8; }
+  .flow-arrow{ stroke:var(--marigold); stroke-width:1.6; fill:none; marker-end:url(#arrowM); }
+  .flow-arrow-alt{ stroke:var(--brass); stroke-width:1.4; fill:none; marker-end:url(#arrowB); }
+  .flow-line-dash{ stroke:var(--brass); stroke-width:1.1; stroke-dasharray:3 4; opacity:0.7; fill:none; }
+  .band-label{ font-family:'IBM Plex Mono', monospace; font-size:9.5px; letter-spacing:0.12em; fill:var(--marigold); }
+  .paper .band-label{ fill:var(--brass); }
+  .node, .core-group{ cursor:default; transform-box:fill-box; transform-origin:center; transition:transform 0.25s ease; }
+  .node:hover{ transform:scale(1.08); }
+  .node:hover .box, .node:hover .box-alt, .node:hover .badge-ring, .node:hover .badge-ring-alt{ filter:drop-shadow(0 0 8px rgba(232,163,61,0.55)); }
+
+  /* two column layout helper */
+  .cols{ display:grid; gap:28px; flex:1; min-height:0; }
+  .cols.c2{ grid-template-columns:1fr 1fr; }
+  .cols.c3{ grid-template-columns:1fr 1fr 1fr; }
+  .panel{ display:flex; flex-direction:column; min-height:0; }
+  .panel h3{ font-size:0.88rem; color:var(--marigold); margin-bottom:8px; font-family:'IBM Plex Mono', monospace; letter-spacing:0.04em; text-transform:uppercase; font-weight:600; }
+  .paper .panel h3{ color:var(--brass); }
+
+  /* capability card grid */
+  .card-grid{ display:grid; grid-template-columns:repeat(4, 1fr); gap:16px; flex:1; }
+  .cap-card{
+    background:rgba(255,255,255,0.55); border:1px solid var(--paper-line); border-radius:14px;
+    padding:16px 16px 14px; display:flex; flex-direction:column; gap:8px;
+    transition:transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  .cap-card:hover{ transform:translateY(-4px); box-shadow:0 10px 24px rgba(138,107,51,0.18); }
+  .cap-card .ic{
+    width:34px; height:34px; border-radius:9px; background:var(--ink-900); color:var(--marigold);
+    display:flex; align-items:center; justify-content:center; flex-shrink:0;
+  }
+  .cap-card .ic svg{ width:18px; height:18px; }
+  .cap-card h4{ font-family:'Fraunces', serif; font-size:0.96rem; font-weight:600; color:var(--ink-900); margin:0; }
+  .cap-card p{ font-size:0.72rem; color:var(--muted-ink); line-height:1.42; margin:0; }
+  .cap-card .tag{ font-family:'IBM Plex Mono', monospace; font-size:0.6rem; color:var(--brass); letter-spacing:0.04em; }
+
+  /* bullet lists */
+  ul.pt{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:9px; }
+  ul.pt li{ font-size:0.78rem; line-height:1.5; padding-left:16px; position:relative; }
+  ul.pt li::before{ content:'—'; position:absolute; left:0; color:var(--marigold); }
+  .paper ul.pt li::before{ color:var(--brass); }
+  ul.pt li b{ font-weight:600; }
+  ul.pt li .m{ font-family:'IBM Plex Mono', monospace; font-size:0.72rem; background:rgba(232,163,61,0.12); padding:1px 5px; border-radius:4px; }
+  .paper ul.pt li .m{ background:rgba(138,107,51,0.1); }
+
+  .stat-row{ display:flex; gap:22px; margin-top:16px; flex-wrap:wrap; }
+  .stat{ text-align:center; }
+  .stat .n{ font-family:'Fraunces', serif; font-size:1.6rem; font-weight:700; color:var(--marigold); line-height:1; }
+  .stat .l{ font-size:0.62rem; color:var(--muted); text-transform:uppercase; letter-spacing:0.08em; margin-top:4px; }
+
+  .pill{ display:inline-flex; align-items:center; gap:5px; font-family:'IBM Plex Mono', monospace; font-size:0.66rem; padding:3px 9px; border-radius:999px; border:1px solid var(--line-dark); color:var(--muted); }
+  .pill.good{ border-color:rgba(95,174,114,0.5); color:var(--good); }
+  .pill.warn{ border-color:rgba(217,113,78,0.55); color:var(--warn); }
+  .paper .pill{ border-color:var(--paper-line); color:var(--muted-ink); }
+
+  .cover{ display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; text-align:center; }
+  .cover .hex-wrap{ margin-bottom:18px; }
+  .cover h1{ font-size:3.1rem; letter-spacing:-0.01em; }
+  .cover .sub-d{ font-family:'IBM Plex Sans Devanagari', sans-serif; color:var(--marigold); font-size:1.5rem; font-weight:600; margin-top:2px; }
+  .cover .tagline{ font-size:1rem; color:var(--muted); margin-top:18px; max-width:560px; line-height:1.6; }
+  .cover .meta{ margin-top:34px; display:flex; gap:22px; font-family:'IBM Plex Mono', monospace; font-size:0.7rem; color:var(--muted); }
+  .cover .meta span{ display:flex; align-items:center; gap:6px; }
+  .cover .meta i{ width:5px; height:5px; border-radius:50%; background:var(--marigold); display:inline-block; }
+
+  .closing{ display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; text-align:center; }
+  .closing h2{ font-size:2.1rem; }
+  .closing p{ color:var(--muted); max-width:520px; margin-top:12px; line-height:1.6; font-size:0.88rem; }
+
+  .foot-note{ margin-top:12px; font-size:0.66rem; color:var(--muted); font-style:italic; }
+  .paper .foot-note{ color:var(--muted-ink); }
+</style>
+</head>
+<body>
+
+<svg style="position:absolute;width:0;height:0" aria-hidden="true">
+  <defs>
+    <marker id="arrowM" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0L10,5L0,10z" fill="#E8A33D"/></marker>
+    <marker id="arrowB" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0L10,5L0,10z" fill="#8A6B33"/></marker>
+
+    <symbol id="i-react" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="2.1" fill="currentColor" stroke="none"/><ellipse cx="12" cy="12" rx="10" ry="4.2"/><ellipse cx="12" cy="12" rx="10" ry="4.2" transform="rotate(60 12 12)"/><ellipse cx="12" cy="12" rx="10" ry="4.2" transform="rotate(120 12 12)"/></g></symbol>
+    <symbol id="i-server" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><rect x="3" y="4" width="18" height="6" rx="1.4"/><rect x="3" y="14" width="18" height="6" rx="1.4"/><circle cx="7" cy="7" r="0.9" fill="currentColor" stroke="none"/><circle cx="7" cy="17" r="0.9" fill="currentColor" stroke="none"/></g></symbol>
+    <symbol id="i-db" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5.5" rx="8" ry="3"/><path d="M4 5.5v13c0 1.7 3.6 3 8 3s8-1.3 8-3v-13"/><path d="M4 12.5c0 1.7 3.6 3 8 3s8-1.3 8-3"/></g></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="1.6"/><path d="M8 11V7.6a4 4 0 0 1 8 0V11"/></g></symbol>
+    <symbol id="i-key" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="4"/><path d="M11.2 10.8L20 19.5M16.3 15.6l2-2M13.3 18.6l2-2"/></g></symbol>
+    <symbol id="i-toggle" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><rect x="3" y="8" width="18" height="8" rx="4"/><circle cx="16" cy="12" r="2.6"/></g></symbol>
+    <symbol id="i-approve" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3z"/><path d="M9 12l2 2 4-4"/></g></symbol>
+    <symbol id="i-bell" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.2a5 5 0 0 0-5 5v3.3c0 1-.4 2-1.1 2.7L4.5 16h15l-1.4-1.8a4 4 0 0 1-1.1-2.7V8.2a5 5 0 0 0-5-5z"/><path d="M9.5 19a2.5 2.5 0 0 0 5 0"/></g></symbol>
+    <symbol id="i-reports" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V11M10 20V4M16 20v-6M3 20h18"/></g></symbol>
+    <symbol id="i-audit" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5h12M4 9.5h9M4 13.5h6"/><circle cx="16" cy="15.5" r="3.1"/><path d="M18.3 17.8L21 20.5"/></g></symbol>
+    <symbol id="i-users" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="4" width="17" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M6 16c.4-1.8 1.6-3 3-3s2.6 1.2 3 3"/><path d="M14 8h4M14 12h4"/></g></symbol>
+    <symbol id="i-grid" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M4 4h16v16H4z"/><path d="M4 10h16M4 16h16M10 4v16M16 4v16"/></g></symbol>
+    <symbol id="i-cloud" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M7 18h10a4 4 0 0 0 .5-7.97A5.5 5.5 0 0 0 7.1 9.1 4 4 0 0 0 7 18z"/></g></symbol>
+    <symbol id="i-layers" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="M12 3l9 5-9 5-9-5 9-5z"/><path d="M3 13l9 5 9-5"/><path d="M3 17l9 5 9-5"/></g></symbol>
+    <symbol id="i-shield" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3z"/><path d="M12 8v5"/><circle cx="12" cy="15.6" r="0.6" fill="currentColor" stroke="none"/></g></symbol>
+    <symbol id="i-blocked" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M6 6l12 12"/></g></symbol>
+    <symbol id="i-globe" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><ellipse cx="12" cy="12" rx="4" ry="9"/><path d="M3 12h18"/></g></symbol>
+  </defs>
+</svg>
+
+  <!-- SLIDE 1 — COVER -->
+  <section class="slide">
+    <div class="corner c-tl"></div><div class="corner c-tr"></div><div class="corner c-bl"></div><div class="corner c-br"></div>
+    <div class="cover">
+      <svg width="120" height="120" viewBox="0 0 200 200" class="hex-wrap">
+        <polygon points="100,30 160,65 160,135 100,170 40,135 40,65" fill="var(--ink-800)" stroke="var(--marigold)" stroke-width="2.4" stroke-linejoin="round"/>
+        <circle cx="100" cy="30" r="4.5" fill="var(--marigold)"/><circle cx="160" cy="65" r="4.5" fill="var(--marigold)"/>
+        <circle cx="160" cy="135" r="4.5" fill="var(--marigold)"/><circle cx="100" cy="170" r="4.5" fill="var(--marigold)"/>
+        <circle cx="40" cy="135" r="4.5" fill="var(--marigold)"/><circle cx="40" cy="65" r="4.5" fill="var(--marigold)"/>
+        <text x="100" y="107" text-anchor="middle" class="devanagari" style="font-size:26px; fill:var(--ivory); font-weight:600;">समग्र</text>
+      </svg>
+      <h1>Samagra</h1>
+      <div class="tagline">Enterprise Architecture Presentation — a grounded look at what is actually built: a React + TypeScript frontend, a layered Express API, and a PostgreSQL data layer, unified by one authorization and feature-flag model.</div>
+      <div class="meta">
+        <span><i></i>React 19 · Vite · TypeScript</span>
+        <span><i></i>Node.js · Express 5 · PostgreSQL</span>
+        <span><i></i>Session-based Auth · RBAC</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 2 — PRODUCT & ARCHITECTURE OVERVIEW -->
+  <section class="slide">
+    <div class="corner c-tl"></div><div class="corner c-tr"></div><div class="corner c-bl"></div><div class="corner c-br"></div>
+    <div class="brandmark"><span class="m">Samagra</span><span class="d devanagari">समग्र</span></div>
+    <div class="num">01 / 13 — OVERVIEW</div>
+    <div class="head">
+      <div class="eyebrow">Product &amp; Architecture Overview</div>
+      <h2 class="title">One enterprise foundation, seven business modules</h2>
+      <p class="lead">Samagra is a reusable enterprise application shell — an operational console for managing customers, users, approvals, reports, notifications and audit history behind a single role-based access model.</p>
+    </div>
+    <div class="body-wrap">
+      <div class="cols c2">
+        <div class="panel">
+          <h3>What it is</h3>
+          <ul class="pt">
+            <li>A <b>modular monolith</b>: one React SPA talking to one Express API backed by one PostgreSQL database — not (yet) a microservice mesh.</li>
+            <li>Feature-sliced on both sides: <span class="m">customers · users · approvals · reports · notifications · audit</span> mirror each other in the frontend's <span class="m">src/features/*</span> and the backend's route/controller/service layers.</li>
+            <li>Every module is gated by the same <b>role → permission</b> matrix, enforced independently on the client (hide/disable UI) and the server (reject the request).</li>
+            <li>Built to run fully offline against in-memory mock data, or fully live against the real API — a single environment switch moves between the two, module by module.</li>
+          </ul>
+        </div>
+        <div class="panel">
+          <h3>Three tiers, one contract</h3>
+          <svg viewBox="0 0 460 300" width="100%" style="max-height:34vh;">
+            <g class="node">
+              <rect class="box" x="30" y="20" width="400" height="60" rx="12"/>
+              <use href="#i-react" x="46" y="36" width="28" height="28" style="color:var(--marigold)"/>
+              <text x="90" y="45" class="node-title">React SPA (Vite + TypeScript)</text>
+              <text x="90" y="62" class="node-desc">Pages, features, MUI components</text>
+            </g>
+            <path class="flow-arrow" d="M230,80 L230,116"/>
+            <text x="245" y="102" class="node-mono">fetch · credentials:include</text>
+            <g class="node">
+              <rect class="box" x="30" y="120" width="400" height="60" rx="12"/>
+              <use href="#i-server" x="46" y="136" width="28" height="28" style="color:var(--marigold)"/>
+              <text x="90" y="145" class="node-title">Express API (Node.js)</text>
+              <text x="90" y="162" class="node-desc">Routes → Controllers → Services → Repositories</text>
+            </g>
+            <path class="flow-arrow" d="M230,180 L230,216"/>
+            <text x="245" y="202" class="node-mono">raw SQL via pg</text>
+            <g class="node">
+              <rect class="box" x="30" y="220" width="400" height="60" rx="12"/>
+              <use href="#i-db" x="46" y="236" width="28" height="28" style="color:var(--marigold)"/>
+              <text x="90" y="245" class="node-title">PostgreSQL</text>
+              <text x="90" y="262" class="node-desc">8 tables, no ORM, plain migrations</text>
+            </g>
+          </svg>
+        </div>
+      </div>
+      <div class="stat-row">
+        <div class="stat"><div class="n">7</div><div class="l">Feature Modules</div></div>
+        <div class="stat"><div class="n">5</div><div class="l">Roles</div></div>
+        <div class="stat"><div class="n">17</div><div class="l">Permissions</div></div>
+        <div class="stat"><div class="n">8</div><div class="l">DB Tables</div></div>
+        <div class="stat"><div class="n">4</div><div class="l">Runtime Deps (API)</div></div>
+        <div class="stat"><div class="n">2</div><div class="l">Locales (en / kn)</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 3 — HIGH LEVEL ARCHITECTURE DIAGRAM -->
+  <section class="slide">
+    <div class="corner c-tl"></div><div class="corner c-tr"></div><div class="corner c-bl"></div><div class="corner c-br"></div>
+    <div class="brandmark"><span class="m">Samagra</span><span class="d devanagari">समग्र</span></div>
+    <div class="num">02 / 13 — HIGH-LEVEL ARCHITECTURE</div>
+    <div class="head">
+      <div class="eyebrow">System Diagram</div>
+      <h2 class="title">Browser, API and database — the whole system on one page</h2>
+      <p class="lead">A single-origin-per-tier local setup today: Vite dev server on 5173, Express on 3000, Postgres on 5432 — connected by an httpOnly session cookie and a CORS allowlist.</p>
+    </div>
+    <div class="body-wrap">
+      <svg viewBox="0 0 1000 470" width="100%" style="max-height:64vh;">
+        <!-- browser -->
+        <rect class="box" x="30" y="30" width="230" height="150" rx="12"/>
+        <text x="145" y="56" text-anchor="middle" class="node-title">Browser</text>
+        <use href="#i-react" x="118" y="70" width="30" height="30" style="color:var(--marigold)"/>
+        <text x="145" y="122" text-anchor="middle" class="node-desc">React 19 SPA · localhost:5173</text>
+        <text x="145" y="140" text-anchor="middle" class="node-mono">apiClient (fetch wrapper)</text>
+        <text x="145" y="156" text-anchor="middle" class="node-mono">TanStack Query cache</text>
+
+        <!-- session cookie annotation -->
+        <path class="flow-arrow" d="M262,90 L370,90"/>
+        <path class="flow-arrow" d="M370,130 L262,130"/>
+        <text x="316" y="80" text-anchor="middle" class="node-mono">HTTPS/HTTP JSON</text>
+        <text x="316" y="146" text-anchor="middle" class="node-mono" style="fill:var(--muted)">sk_session cookie</text>
+
+        <!-- API -->
+        <rect class="box" x="375" y="30" width="250" height="150" rx="12"/>
+        <text x="500" y="56" text-anchor="middle" class="node-title">Express API</text>
+        <use href="#i-server" x="486" y="70" width="30" height="30" style="color:var(--marigold)"/>
+        <text x="500" y="122" text-anchor="middle" class="node-desc">Node.js · localhost:3000/api</text>
+        <text x="500" y="140" text-anchor="middle" class="node-mono">cors({ credentials:true })</text>
+        <text x="500" y="156" text-anchor="middle" class="node-mono">attachUser → requireAuth/Role</text>
+
+        <path class="flow-arrow" d="M625,105 L740,105"/>
+        <text x="682" y="95" text-anchor="middle" class="node-mono">SQL (pg)</text>
+
+        <!-- DB -->
+        <rect class="box" x="745" y="30" width="225" height="150" rx="12"/>
+        <text x="857" y="56" text-anchor="middle" class="node-title">PostgreSQL 16</text>
+        <use href="#i-db" x="843" y="70" width="30" height="30" style="color:var(--marigold)"/>
+        <text x="857" y="122" text-anchor="middle" class="node-desc">localhost:5432 · docker-compose</text>
+        <text x="857" y="140" text-anchor="middle" class="node-mono">8 tables · users, sessions,</text>
+        <text x="857" y="156" text-anchor="middle" class="node-mono">customers, approvals…</text>
+
+        <!-- lower band: mock/real switch -->
+        <line class="flow-line-dash" x1="30" y1="230" x2="970" y2="230"/>
+        <text x="30" y="220" class="band-label">RUNTIME CONFIGURATION</text>
+
+        <rect class="box-muted" x="60" y="255" width="260" height="90" rx="10"/>
+        <use href="#i-toggle" x="76" y="270" width="24" height="24" style="color:var(--marigold)"/>
+        <text x="150" y="280" class="node-title" style="font-size:12px">Mock / Real switch</text>
+        <text x="150" y="298" class="node-desc" style="font-size:9.5px">VITE_USE_MOCK_API +</text>
+        <text x="150" y="312" class="node-desc" style="font-size:9.5px">4 per-feature overrides</text>
+        <text x="150" y="330" class="node-mono" style="font-size:8.5px">Currently: all real ✓</text>
+
+        <rect class="box-muted" x="370" y="255" width="260" height="90" rx="10"/>
+        <use href="#i-key" x="386" y="270" width="24" height="24" style="color:var(--marigold)"/>
+        <text x="460" y="280" class="node-title" style="font-size:12px">RBAC gate</text>
+        <text x="460" y="298" class="node-desc" style="font-size:9.5px">5 roles · 17 permissions</text>
+        <text x="460" y="312" class="node-desc" style="font-size:9.5px">enforced client + server side</text>
+
+        <rect class="box-muted" x="680" y="255" width="260" height="90" rx="10"/>
+        <use href="#i-globe" x="696" y="270" width="24" height="24" style="color:var(--marigold)"/>
+        <text x="770" y="280" class="node-title" style="font-size:12px">i18n</text>
+        <text x="770" y="298" class="node-desc" style="font-size:9.5px">Custom dictionary provider</text>
+        <text x="770" y="312" class="node-desc" style="font-size:9.5px">English · Kannada (en / kn)</text>
+
+        <text x="500" y="400" text-anchor="middle" class="node-mono" style="fill:var(--muted); font-size:10px">No load balancer, no queue, no cache layer today — one Node process, one Postgres instance, by design at this stage.</text>
+      </svg>
+    </div>
+  </section>
+
+  <!-- SLIDE 4 — FRONTEND ARCHITECTURE -->
+  <section class="slide paper">
+    <div class="corner c-tl"></div><div class="corner c-tr"></div><div class="corner c-bl"></div><div class="corner c-br"></div>
+    <div class="brandmark"><span class="m">Samagra</span><span class="d devanagari">समग्र</span></div>
+    <div class="num">03 / 13 — FRONTEND</div>
+    <div class="head">
+      <div class="eyebrow">Frontend Architecture</div>
+      <h2 class="title">React 19, Vite, TypeScript — organized by feature, not by file type</h2>
+      <p class="lead">Every business capability owns an identical four-folder shape, so a developer who understands one feature already understands all six.</p>
+    </div>
+    <div class="body-wrap">
+      <div class="cols c2">
+        <div class="panel">
+          <h3>Stack</h3>
+          <ul class="pt">
+            <li><b>React 19</b> + <b>Vite</b> + <b>TypeScript</b> (strict); <span class="m">react-router</span> v8 data router (<span class="m">createBrowserRouter</span>) with nested <span class="m">ProtectedRoute</span> elements gating whole subtrees by permission.</li>
+            <li><b>MUI v9</b> + Emotion for every visual surface — theme tokens in <span class="m">src/theme/tokens.ts</span>, per-component overrides in <span class="m">theme/customizations/*</span>. No CSS Modules in practice.</li>
+            <li><b>TanStack Query v5</b> owns all server state (one shared <span class="m">QueryClient</span>); React Context owns auth/notifications/i18n/sidebar UI state. No Redux, no Zustand.</li>
+            <li>Path alias <span class="m">@/*</span> → <span class="m">src/*</span>, shared across Vite and TypeScript config.</li>
+          </ul>
+        </div>
+        <div class="panel">
+          <h3>The feature folder shape</h3>
+          <svg viewBox="0 0 460 260" width="100%" style="max-height:32vh;">
+            <rect class="box-alt" x="20" y="15" width="420" height="36" rx="9"/>
+            <text x="40" y="38" class="node-title" style="font-size:12px">src/features/&lt;name&gt;/types.ts</text>
+            <path class="flow-arrow-alt" d="M230,51 L230,68"/>
+            <rect class="box-alt" x="20" y="70" width="420" height="36" rx="9"/>
+            <text x="40" y="93" class="node-title" style="font-size:12px">api/ — mockXApi + realXApi, switched by flag</text>
+            <path class="flow-arrow-alt" d="M230,106 L230,123"/>
+            <rect class="box-alt" x="20" y="125" width="420" height="36" rx="9"/>
+            <text x="40" y="148" class="node-title" style="font-size:12px">hooks/ — useQuery / useMutation wrappers</text>
+            <path class="flow-arrow-alt" d="M230,161 L230,178"/>
+            <rect class="box-alt" x="20" y="180" width="420" height="36" rx="9"/>
+            <text x="40" y="203" class="node-title" style="font-size:12px">components/ — feature-scoped UI</text>
+            <text x="40" y="240" class="node-desc" style="font-size:10px">Repeats identically for: approvals · audit · customers · notifications · reports · users</text>
+          </svg>
+        </div>
+      </div>
+      <div class="cols c2" style="margin-top:6px;">
+        <div class="panel">
+          <h3>Mock / Real switch, exactly</h3>
+          <ul class="pt">
+            <li><span class="m">env.ts</span> reads <span class="m">VITE_USE_MOCK_API</span> (global default) plus four per-feature overrides — <span class="m">VITE_USE_MOCK_{APPROVALS,AUDIT,REPORTS,NOTIFICATIONS}_API</span> — each falling back to the global flag if unset.</li>
+            <li>Every feature's API file exports one resolved constant: <span class="m">export const xApi = appConfig.features.useMockXApi ? mockXApi : realXApi</span> — the rest of the app only ever imports <span class="m">xApi</span>.</li>
+            <li><span class="m">realXApi</span> calls <span class="m">apiClient</span> (a hand-rolled fetch wrapper, <span class="m">credentials:'include'</span>, 15s timeout, AbortController) against REST paths; <span class="m">mockXApi</span> mutates an in-memory array with a simulated 400ms latency.</li>
+          </ul>
+        </div>
+        <div class="panel">
+          <h3>Auth &amp; permissions on the client</h3>
+          <ul class="pt">
+            <li><span class="m">roles.ts</span> defines 5 roles; <span class="m">permissions.ts</span> defines 17 permission constants; <span class="m">rolePermissions.ts</span> is a static, hand-maintained role → permission[] table.</li>
+            <li><span class="m">useAuth().can(permission)</span> reads that table and gates route access (<span class="m">ProtectedRoute</span>) and individual buttons/menu items throughout the UI.</li>
+            <li><span class="m">AuthProvider</span> supports both modes: mock role-switch buttons (localStorage-backed) and a real <span class="m">login()</span> that calls the API and hydrates from the session cookie via <span class="m">/auth/me</span> on load.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 5 — BACKEND ARCHITECTURE -->
+  <section class="slide paper">
+    <div class="corner c-tl"></div><div class="corner c-tr"></div><div class="corner c-bl"></div><div class="corner c-br"></div>
+    <div class="brandmark"><span class="m">Samagra</span><span class="d devanagari">समग्र</span></div>
+    <div class="num">04 / 13 — BACKEND</div>
+    <div class="head">
+      <div class="eyebrow">Backend Architecture</div>
+      <h2 class="title">Express, four dependencies, and one strict layering rule</h2>
+      <p class="lead">No ORM, no JWT library, no bcrypt, no cookie-parser — just Express, cors, dotenv and pg, with Node's own crypto module doing the security-sensitive work.</p>
+    </div>
+    <div class="body-wrap">
+      <div class="cols c2">
+        <div class="panel">
+          <h3>Request pipeline (strict layering)</h3>
+          <svg viewBox="0 0 460 300" width="100%" style="max-height:36vh;">
+            <rect class="box-alt" x="10" y="8" width="440" height="34" rx="9"/>
+            <text x="30" y="30" class="node-title" style="font-size:11.5px">cors → express.json → requestLogger → attachUser</text>
+            <path class="flow-arrow-alt" d="M230,42 L230,58"/>
+            <rect class="box-alt" x="10" y="60" width="440" height="34" rx="9"/>
+            <text x="30" y="82" class="node-title" style="font-size:11.5px">routes/*.ts — requireAuth / requireRole per route</text>
+            <path class="flow-arrow-alt" d="M230,94 L230,110"/>
+            <rect class="box-alt" x="10" y="112" width="440" height="34" rx="9"/>
+            <text x="30" y="134" class="node-title" style="font-size:11.5px">controllers/*.ts — parse request, shape response</text>
+            <path class="flow-arrow-alt" d="M230,146 L230,162"/>
+            <rect class="box-alt" x="10" y="164" width="440" height="34" rx="9"/>
+            <text x="30" y="186" class="node-title" style="font-size:11.5px">services/*.ts — business rules, audit + notify hooks</text>
+            <path class="flow-arrow-alt" d="M230,198 L230,214"/>
+            <rect class="box-alt" x="10" y="216" width="440" height="34" rx="9"/>
+            <text x="30" y="238" class="node-title" style="font-size:11.5px">repositories/*.ts — the only place raw SQL is written</text>
+            <path class="flow-arrow-alt" d="M230,250 L230,266"/>
+            <rect class="box-alt" x="10" y="268" width="440" height="28" rx="9" style="fill:var(--ink-900); stroke:var(--marigold)"/>
+            <text x="230" y="287" text-anchor="middle" class="node-title" style="font-size:11.5px; fill:var(--ivory)">PostgreSQL (pg pool, no ORM)</text>
+          </svg>
+        </div>
+        <div class="panel">
+          <h3>Security building blocks</h3>
+          <ul class="pt">
+            <li><b>Passwords:</b> <span class="m">crypto.scrypt</span> + random salt + <span class="m">timingSafeEqual</span> — Node built-ins only, zero hashing dependency.</li>
+            <li><b>Sessions:</b> opaque random ID stored in a <span class="m">sessions</span> table (7-day TTL), returned as an <span class="m">HttpOnly</span>, <span class="m">SameSite=Lax</span> cookie named <span class="m">sk_session</span> — not a JWT, so logout is a real server-side row delete.</li>
+            <li><b>Cookies:</b> parsed and built by hand in <span class="m">utils/cookies.ts</span> — no <span class="m">cookie-parser</span> dependency.</li>
+            <li><b>Identity:</b> <span class="m">attachUser</span> runs on every request and opportunistically resolves <span class="m">req.user</span>; <span class="m">requireAuth</span>/<span class="m">requireRole(...)</span> are applied selectively per route.</li>
+            <li><b>Validation &amp; errors:</b> controllers validate required fields and enum values, throwing a typed <span class="m">AppError(message, statusCode)</span>; a single <span class="m">errorHandler</span> middleware converts these into consistent JSON error responses.</li>
+          </ul>
+          <h3 style="margin-top:14px;">IDs</h3>
+          <ul class="pt">
+            <li>Human-readable, prefixed text IDs generated in-app (e.g. <span class="m">cus_a1b2c3d4</span>) — not database-generated UUIDs, and not auto-increment integers.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 6 — DATABASE ARCHITECTURE -->
+  <section class="slide">
+    <div class="corner c-tl"></div><div class="corner c-tr"></div><div class="corner c-bl"></div><div class="corner c-br"></div>
+    <div class="brandmark"><span class="m">Samagra</span><span class="d devanagari">समग्र</span></div>
+    <div class="num">05 / 13 — DATABASE</div>
+    <div class="head">
+      <div class="eyebrow">Database Architecture</div>
+      <h2 class="title">PostgreSQL — eight tables, hand-written migrations, users at the center</h2>
+      <p class="lead">Seven sequential <span class="mono">.sql</span> files applied by a small custom migration runner (<span class="mono">src/db/migrate.ts</span>) — no Prisma, TypeORM, or Knex.</p>
+    </div>
+    <div class="body-wrap">
+      <svg viewBox="0 0 1000 480" width="100%" style="max-height:66vh;">
+        <!-- hub: users -->
+        <circle class="orbit" cx="500" cy="250" r="0" style="display:none"/>
+        <g>
+          <line class="flow-line-dash" x1="500" y1="250" x2="500" y2="80"/>
+          <line class="flow-line-dash" x1="500" y1="250" x2="700" y2="150"/>
+          <line class="flow-line-dash" x1="500" y1="250" x2="740" y2="330"/>
+          <line class="flow-line-dash" x1="500" y1="250" x2="560" y2="430"/>
+          <line class="flow-line-dash" x1="500" y1="250" x2="300" y2="150"/>
+          <line class="flow-line-dash" x1="500" y1="250" x2="260" y2="330"/>
+        </g>
+        <g class="node">
+          <circle class="badge-ring" cx="500" cy="250" r="44"/>
+          <use href="#i-users" x="486" y="236" width="28" height="28" style="color:var(--marigold)"/>
+        </g>
+        <text x="500" y="308" text-anchor="middle" class="node-title">users</text>
+        <text x="500" y="324" text-anchor="middle" class="node-desc">id · email(unique) · role · password_hash</text>
+
+        <g class="node">
+          <circle class="badge-ring" cx="500" cy="60" r="30"/>
+          <use href="#i-key" x="486" y="46" width="28" height="28" style="color:var(--marigold)"/>
+        </g>
+        <text x="500" y="106" text-anchor="middle" class="node-title">sessions</text>
+        <text x="500" y="122" text-anchor="middle" class="node-desc">user_id FK · expires_at (7d TTL)</text>
+
+        <g class="node">
+          <circle class="badge-ring" cx="720" cy="140" r="30"/>
+          <use href="#i-approve" x="706" y="126" width="28" height="28" style="color:var(--marigold)"/>
+        </g>
+        <text x="720" y="186" text-anchor="middle" class="node-title">approval_requests</text>
+        <text x="720" y="202" text-anchor="middle" class="node-desc">requested_by_id · approver_id · status</text>
+
+        <g class="node">
+          <circle class="badge-ring" cx="760" cy="330" r="30"/>
+          <use href="#i-audit" x="746" y="316" width="28" height="28" style="color:var(--marigold)"/>
+        </g>
+        <text x="760" y="376" text-anchor="middle" class="node-title">audit_logs</text>
+        <text x="760" y="392" text-anchor="middle" class="node-desc">actor_id FK · action · module · created_at</text>
+
+        <g class="node">
+          <circle class="badge-ring" cx="560" cy="430" r="30"/>
+          <use href="#i-reports" x="546" y="416" width="28" height="28" style="color:var(--marigold)"/>
+        </g>
+        <text x="560" y="474" text-anchor="middle" class="node-title" style="font-size:11px">report_jobs</text>
+
+        <g class="node">
+          <circle class="badge-ring" cx="300" cy="150" r="30"/>
+          <use href="#i-bell" x="286" y="136" width="28" height="28" style="color:var(--marigold)"/>
+        </g>
+        <text x="300" y="196" text-anchor="middle" class="node-title">notifications</text>
+        <text x="300" y="212" text-anchor="middle" class="node-desc">+ notification_preferences (1:1)</text>
+
+        <!-- customers: separate, no FK -->
+        <g class="node">
+          <circle class="badge-ring-alt" cx="260" cy="330" r="30"/>
+          <use href="#i-users" x="246" y="316" width="28" height="28" style="color:var(--brass)"/>
+        </g>
+        <text x="260" y="376" text-anchor="middle" class="node-title">customers</text>
+        <text x="260" y="392" text-anchor="middle" class="node-desc" style="fill:var(--warn)">standalone — no FK to users</text>
+
+        <text x="500" y="450" text-anchor="middle" class="node-mono" style="fill:var(--muted)">All dashed lines = "REFERENCES users(id)" foreign keys · migrations 0001–0007, ~156 seeded customer rows</text>
+      </svg>
+    </div>
+  </section>
+
+  <!-- SLIDE 7 — REQUEST FLOW -->
+  <section class="slide">
+    <div class="corner c-tl"></div><div class="corner c-tr"></div><div class="corner c-bl"></div><div class="corner c-br"></div>
+    <div class="brandmark"><span class="m">Samagra</span><span class="d devanagari">समग्र</span></div>
+    <div class="num">06 / 13 — REQUEST FLOW</div>
+    <div class="head">
+      <div class="eyebrow">Frontend → Backend → Database</div>
+      <h2 class="title">One authenticated write, end to end</h2>
+      <p class="lead">Example: a manager approves a pending request. The same shape applies to every mutation in the system.</p>
+    </div>
+    <div class="body-wrap">
+      <svg viewBox="0 0 1000 420" width="100%" style="max-height:62vh;">
+        <!-- lanes -->
+        <text x="90" y="30" text-anchor="middle" class="node-title" style="font-size:11px">React Hook</text>
+        <text x="270" y="30" text-anchor="middle" class="node-title" style="font-size:11px">apiClient</text>
+        <text x="460" y="30" text-anchor="middle" class="node-title" style="font-size:11px">Middleware</text>
+        <text x="640" y="30" text-anchor="middle" class="node-title" style="font-size:11px">Controller</text>
+        <text x="800" y="30" text-anchor="middle" class="node-title" style="font-size:11px">Service</text>
+        <text x="930" y="30" text-anchor="middle" class="node-title" style="font-size:11px">Repository/DB</text>
+        <line class="flow-line-dash" x1="90" y1="45" x2="90" y2="380"/>
+        <line class="flow-line-dash" x1="270" y1="45" x2="270" y2="380"/>
+        <line class="flow-line-dash" x1="460" y1="45" x2="460" y2="380"/>
+        <line class="flow-line-dash" x1="640" y1="45" x2="640" y2="380"/>
+        <line class="flow-line-dash" x1="800" y1="45" x2="800" y2="380"/>
+        <line class="flow-line-dash" x1="930" y1="45" x2="930" y2="380"/>
+
+        <!-- step 1 -->
+        <path class="flow-arrow" d="M90,70 L262,70"/>
+        <text x="180" y="62" text-anchor="middle" class="node-mono">1. useApproveApproval.mutate()</text>
+
+        <path class="flow-arrow" d="M270,90 L452,90"/>
+        <text x="360" y="82" text-anchor="middle" class="node-mono">2. POST /api/approvals/:id/approve</text>
+        <text x="360" y="102" text-anchor="middle" class="node-mono" style="fill:var(--muted)">credentials: include (cookie attached)</text>
+
+        <path class="flow-arrow" d="M460,120 L632,120"/>
+        <text x="546" y="112" text-anchor="middle" class="node-mono">3. attachUser → requireAuth → requireRole</text>
+        <text x="546" y="132" text-anchor="middle" class="node-desc">reject with 401/403 if not satisfied</text>
+
+        <path class="flow-arrow" d="M640,155 L792,155"/>
+        <text x="716" y="147" text-anchor="middle" class="node-mono">4. approvalController.approve(req,res)</text>
+
+        <path class="flow-arrow" d="M800,185 L922,185"/>
+        <text x="861" y="177" text-anchor="middle" class="node-mono">5. approvalService.approve()</text>
+        <text x="861" y="197" text-anchor="middle" class="node-desc">business rule + status transition</text>
+
+        <rect class="box" x="820" y="210" width="140" height="34" rx="8"/>
+        <text x="890" y="231" text-anchor="middle" class="node-title" style="font-size:10.5px">UPDATE approval_requests</text>
+
+        <path class="flow-arrow" d="M800,260 L800,290"/>
+        <text x="800" y="277" text-anchor="middle" class="node-mono" style="font-size:8.5px">then, fire-and-forget:</text>
+        <rect class="box-warn" x="700" y="292" width="120" height="30" rx="7"/>
+        <text x="760" y="311" text-anchor="middle" class="node-title" style="font-size:9.5px; fill:var(--ink-900)">auditLogService.record()</text>
+        <rect class="box-warn" x="830" y="292" width="130" height="30" rx="7"/>
+        <text x="895" y="311" text-anchor="middle" class="node-title" style="font-size:9.5px; fill:var(--ink-900)">notificationService.notify()</text>
+        <text x="800" y="336" text-anchor="middle" class="node-desc" style="font-size:9px">both "best effort" — never throw, never block the response</text>
+
+        <path class="flow-arrow-alt" d="M640,355 L270,355"/>
+        <text x="450" y="347" text-anchor="middle" class="node-mono">6. 200 OK → TanStack Query invalidates + refetches</text>
+      </svg>
+    </div>
+  </section>
+
+  <!-- SLIDE 8 — CORE PLATFORM CAPABILITIES -->
+  <section class="slide paper">
+    <div class="corner c-tl"></div><div class="corner c-tr"></div><div class="corner c-bl"></div><div class="corner c-br"></div>
+    <div class="brandmark"><span class="m">Samagra</span><span class="d devanagari">समग्र</span></div>
+    <div class="num">07 / 13 — PLATFORM CAPABILITIES</div>
+    <div class="head">
+      <div class="eyebrow">Core Platform Capabilities</div>
+      <h2 class="title">Seven capabilities, shared by every feature that needs them</h2>
+      <p class="lead">These are cross-cutting building blocks, not one-off screens — every business module composes them.</p>
+    </div>
+    <div class="body-wrap">
+      <div class="card-grid">
+        <div class="cap-card">
+          <div class="ic"><svg><use href="#i-lock"/></svg></div>
+          <h4>Authentication</h4>
+          <p>Email + password login, scrypt-hashed, opaque server-side session stored in Postgres, delivered as an HttpOnly cookie. No JWT, no third-party IdP.</p>
+          <span class="tag">sk_session · 7-day TTL</span>
+        </div>
+        <div class="cap-card">
+          <div class="ic"><svg><use href="#i-key"/></svg></div>
+          <h4>RBAC</h4>
+          <p>5 roles, 17 permissions, one static role→permission table mirrored on client and server. Gates routes, buttons, and API endpoints identically.</p>
+          <span class="tag">requireRole(...)</span>
+        </div>
+        <div class="cap-card">
+          <div class="ic"><svg><use href="#i-toggle"/></svg></div>
+          <h4>Mock / Real switch</h4>
+          <p>A global flag plus four per-feature overrides let any module run offline against in-memory data or live against the real API, independently.</p>
+          <span class="tag">VITE_USE_MOCK_*</span>
+        </div>
+        <div class="cap-card">
+          <div class="ic"><svg><use href="#i-grid"/></svg></div>
+          <h4>CRUD foundations</h4>
+          <p>Customers and Users share the same list/detail/create/update shape end to end — repository → service → controller → feature hook → table UI.</p>
+          <span class="tag">customers · users</span>
+        </div>
+        <div class="cap-card">
+          <div class="ic"><svg><use href="#i-bell"/></svg></div>
+          <h4>Notifications</h4>
+          <p>In-app center with read/unread state and per-type preferences. Server-authoritative "best effort" writes after real mutations, scoped to the acting user.</p>
+          <span class="tag">notify() never throws</span>
+        </div>
+        <div class="cap-card">
+          <div class="ic"><svg><use href="#i-reports"/></svg></div>
+          <h4>Reporting</h4>
+          <p>Customer reports generate synchronously; the User &amp; Access report intentionally runs in staged background steps for a realistic "processing" feel. Exported as .xlsx.</p>
+          <span class="tag">local disk storage</span>
+        </div>
+        <div class="cap-card">
+          <div class="ic"><svg><use href="#i-audit"/></svg></div>
+          <h4>Audit Logging</h4>
+          <p>Server-authoritative history of who did what, written by services after real mutations — never trusted from client-submitted events alone.</p>
+          <span class="tag">actor_id · module · action</span>
+        </div>
+        <div class="cap-card">
+          <div class="ic"><svg><use href="#i-globe"/></svg></div>
+          <h4>Internationalization</h4>
+          <p>A lightweight, dependency-free translation provider with typed dotted-path keys, switchable in Settings → General between English and Kannada.</p>
+          <span class="tag">en / kn</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 9 — DEPLOYMENT ARCHITECTURE -->
+  <section class="slide">
+    <div class="corner c-tl"></div><div class="corner c-tr"></div><div class="corner c-bl"></div><div class="corner c-br"></div>
+    <div class="brandmark"><span class="m">Samagra</span><span class="d devanagari">समग्र</span></div>
+    <div class="num">08 / 13 — DEPLOYMENT</div>
+    <div class="head">
+      <div class="eyebrow">Deployment Architecture</div>
+      <h2 class="title">Local today, deliberately undecided beyond it</h2>
+      <p class="lead">The integration roadmap explicitly declines to lock in a hosting story prematurely — what follows is today's real setup plus openly-flagged future considerations, not a commitment.</p>
+    </div>
+    <div class="body-wrap">
+      <div class="cols c2">
+        <div class="panel">
+          <h3>Local development <span class="pill good" style="margin-left:8px;">current</span></h3>
+          <svg viewBox="0 0 460 260" width="100%" style="max-height:32vh;">
+            <rect class="box" x="10" y="15" width="200" height="60" rx="10"/>
+            <text x="110" y="40" text-anchor="middle" class="node-title" style="font-size:11px">Vite dev server</text>
+            <text x="110" y="58" text-anchor="middle" class="node-mono">:5173</text>
+            <rect class="box" x="250" y="15" width="200" height="60" rx="10"/>
+            <text x="350" y="40" text-anchor="middle" class="node-title" style="font-size:11px">Express (tsx watch)</text>
+            <text x="350" y="58" text-anchor="middle" class="node-mono">:3000</text>
+            <path class="flow-arrow" d="M210,45 L248,45"/>
+            <rect class="box" x="130" y="110" width="200" height="60" rx="10"/>
+            <text x="230" y="135" text-anchor="middle" class="node-title" style="font-size:11px">Postgres 16 (docker-compose)</text>
+            <text x="230" y="153" text-anchor="middle" class="node-mono">:5432</text>
+            <path class="flow-arrow" d="M350,75 L280,108"/>
+            <text x="150" y="200" class="node-mono" style="font-size:9px">.env → DATABASE_URL, CORS_ORIGIN</text>
+            <text x="150" y="216" class="node-mono" style="font-size:9px">.env → VITE_API_BASE_URL, mock flags</text>
+            <text x="150" y="236" class="node-mono" style="font-size:9px">npm run migrate · seed:auth · dev</text>
+          </svg>
+        </div>
+        <div class="panel">
+          <h3>Future cloud shape <span class="pill warn" style="margin-left:8px;">not yet decided</span></h3>
+          <svg viewBox="0 0 460 260" width="100%" style="max-height:32vh; opacity:0.85">
+            <rect class="box-muted" x="10" y="15" width="200" height="55" rx="10" stroke-dasharray="4 4"/>
+            <text x="110" y="38" text-anchor="middle" class="node-title" style="font-size:11px">Static SPA hosting</text>
+            <text x="110" y="55" text-anchor="middle" class="node-desc" style="font-size:9px">built Vite bundle</text>
+            <rect class="box-muted" x="250" y="15" width="200" height="55" rx="10" stroke-dasharray="4 4"/>
+            <use href="#i-cloud" x="266" y="26" width="20" height="20" style="color:var(--muted)"/>
+            <text x="360" y="38" text-anchor="middle" class="node-title" style="font-size:11px">Managed Node host</text>
+            <text x="360" y="55" text-anchor="middle" class="node-desc" style="font-size:9px">stateless API instance(s)</text>
+            <rect class="box-muted" x="130" y="105" width="200" height="55" rx="10" stroke-dasharray="4 4"/>
+            <text x="230" y="128" text-anchor="middle" class="node-title" style="font-size:11px">Managed PostgreSQL</text>
+            <rect class="box-muted" x="130" y="175" width="200" height="55" rx="10" stroke-dasharray="4 4"/>
+            <text x="230" y="198" text-anchor="middle" class="node-title" style="font-size:11px">Object storage</text>
+            <text x="230" y="215" text-anchor="middle" class="node-desc" style="font-size:9px">replacing local disk for reports</text>
+          </svg>
+        </div>
+      </div>
+      <p class="foot-note">Sessions already live in Postgres (not in-process memory), so the API layer is horizontally stateless-ready — the two concrete blockers to scaling out today are local-disk report storage and a single-origin CORS allowlist.</p>
+    </div>
+  </section>
+
+  <!-- SLIDE 10 — SECURITY & SCALABILITY -->
+  <section class="slide paper">
+    <div class="corner c-tl"></div><div class="corner c-tr"></div><div class="corner c-bl"></div><div class="corner c-br"></div>
+    <div class="brandmark"><span class="m">Samagra</span><span class="d devanagari">समग्र</span></div>
+    <div class="num">09 / 13 — SECURITY &amp; SCALABILITY</div>
+    <div class="head">
+      <div class="eyebrow">Honest Assessment</div>
+      <h2 class="title">What's solid, and what's still open</h2>
+      <p class="lead">Presented plainly, including current gaps — not glossed over.</p>
+    </div>
+    <div class="body-wrap">
+      <div class="cols c2">
+        <div class="panel">
+          <h3>Security</h3>
+          <ul class="pt">
+            <li><span class="pill good">✓</span> Passwords hashed with scrypt + per-user salt, compared with a timing-safe check.</li>
+            <li><span class="pill good">✓</span> Sessions are opaque, server-revocable, HttpOnly + SameSite=Lax cookies — not readable or forgeable from JS.</li>
+            <li><span class="pill good">✓</span> Approvals, Reports, Audit and Notifications all enforce <span class="m">requireAuth</span>/<span class="m">requireRole</span> server-side, matching the client's RBAC.</li>
+            <li><span class="pill warn">!</span> <b>Customers and Users routes currently have no server-side auth check at all</b> — any request that reaches the API can list/create/update/delete them. A known, open gap, not a design choice.</li>
+            <li><span class="pill warn">!</span> CORS is a single explicit origin for local dev — intentionally not production-hardened yet.</li>
+            <li><span class="pill warn">!</span> No rate limiting, MFA, SSO or password-reset flow exist — explicitly out of scope for the current phase.</li>
+          </ul>
+        </div>
+        <div class="panel">
+          <h3>Scalability</h3>
+          <ul class="pt">
+            <li><span class="pill good">✓</span> Stateless-friendly API: session state lives in Postgres, not process memory, so the Node process can already be run as multiple instances behind a load balancer.</li>
+            <li><span class="pill good">✓</span> Customer report generation is synchronous by deliberate choice — acceptable at current data volume, simple to reason about.</li>
+            <li><span class="pill warn">!</span> Report files are written to local disk (<span class="m">backend/storage/reports</span>) — this pins report generation/download to a single instance until moved to object storage.</li>
+            <li><span class="pill warn">!</span> No background job queue/worker exists yet; the User report's staged progress is a UX simulation via <span class="m">setTimeout</span>, not a real async job runner.</li>
+            <li><span class="pill warn">!</span> Single Postgres instance, no read replicas, no caching layer — appropriate for current scale, a known ceiling beyond it.</li>
+            <li><span class="pill">·</span> No automated test suite (unit or E2E) exists in either package today.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 11 — FUTURE EVOLUTION -->
+  <section class="slide">
+    <div class="corner c-tl"></div><div class="corner c-tr"></div><div class="corner c-bl"></div><div class="corner c-br"></div>
+    <div class="brandmark"><span class="m">Samagra</span><span class="d devanagari">समग्र</span></div>
+    <div class="num">10 / 13 — FUTURE EVOLUTION</div>
+    <div class="head">
+      <div class="eyebrow">Modular Monolith → Scalable Architecture</div>
+      <h2 class="title">Extract seams already exist — nothing has to be rewritten</h2>
+      <p class="lead">Because the codebase is already feature-sliced with a clean controller/service/repository boundary, each of the following is additive, not a rearchitecture.</p>
+    </div>
+    <div class="body-wrap">
+      <svg viewBox="0 0 1000 300" width="100%" style="max-height:56vh;">
+        <rect class="box" x="10" y="110" width="190" height="80" rx="12"/>
+        <text x="105" y="140" text-anchor="middle" class="node-title" style="font-size:12px">Today</text>
+        <text x="105" y="158" text-anchor="middle" class="node-desc">Modular monolith</text>
+        <text x="105" y="174" text-anchor="middle" class="node-desc">1 API · 1 DB · 1 process</text>
+
+        <path class="flow-arrow" d="M205,150 L255,150"/>
+
+        <g class="node">
+          <rect class="box-muted" x="260" y="60" width="170" height="70" rx="10" stroke-dasharray="4 4"/>
+          <use href="#i-shield" x="272" y="72" width="22" height="22" style="color:var(--marigold)"/>
+          <text x="345" y="98" text-anchor="middle" class="node-title" style="font-size:11px">Close the auth gap</text>
+          <text x="345" y="114" text-anchor="middle" class="node-desc" style="font-size:9px">requireAuth on Customers/Users</text>
+        </g>
+        <g class="node">
+          <rect class="box-muted" x="260" y="150" width="170" height="70" rx="10" stroke-dasharray="4 4"/>
+          <use href="#i-layers" x="272" y="162" width="22" height="22" style="color:var(--marigold)"/>
+          <text x="345" y="188" text-anchor="middle" class="node-title" style="font-size:11px">Shared permissions package</text>
+          <text x="345" y="204" text-anchor="middle" class="node-desc" style="font-size:9px">stop client/server drift</text>
+        </g>
+
+        <g class="node">
+          <rect class="box-muted" x="450" y="60" width="170" height="70" rx="10" stroke-dasharray="4 4"/>
+          <use href="#i-reports" x="462" y="72" width="22" height="22" style="color:var(--marigold)"/>
+          <text x="535" y="98" text-anchor="middle" class="node-title" style="font-size:11px">Job queue for reports</text>
+          <text x="535" y="114" text-anchor="middle" class="node-desc" style="font-size:9px">real async worker, not setTimeout</text>
+        </g>
+        <g class="node">
+          <rect class="box-muted" x="450" y="150" width="170" height="70" rx="10" stroke-dasharray="4 4"/>
+          <use href="#i-db" x="462" y="162" width="22" height="22" style="color:var(--marigold)"/>
+          <text x="535" y="188" text-anchor="middle" class="node-title" style="font-size:11px">Object storage</text>
+          <text x="535" y="204" text-anchor="middle" class="node-desc" style="font-size:9px">reports move off local disk</text>
+        </g>
+
+        <g class="node">
+          <rect class="box-muted" x="640" y="60" width="170" height="70" rx="10" stroke-dasharray="4 4"/>
+          <use href="#i-grid" x="652" y="72" width="22" height="22" style="color:var(--marigold)"/>
+          <text x="725" y="98" text-anchor="middle" class="node-title" style="font-size:11px">Playwright E2E</text>
+          <text x="725" y="114" text-anchor="middle" class="node-desc" style="font-size:9px">mock-mode CI + scheduled real-mode</text>
+        </g>
+        <g class="node">
+          <rect class="box-muted" x="640" y="150" width="170" height="70" rx="10" stroke-dasharray="4 4"/>
+          <use href="#i-cloud" x="652" y="162" width="22" height="22" style="color:var(--marigold)"/>
+          <text x="725" y="188" text-anchor="middle" class="node-title" style="font-size:11px">Production hardening</text>
+          <text x="725" y="204" text-anchor="middle" class="node-desc" style="font-size:9px">CORS allowlist, Secure cookies</text>
+        </g>
+
+        <path class="flow-arrow" d="M430,150 L445,150"/>
+        <path class="flow-arrow" d="M620,150 L635,150"/>
+        <path class="flow-arrow-alt" d="M430,95 L445,95"/>
+        <path class="flow-arrow-alt" d="M620,95 L635,95"/>
+
+        <rect class="box" x="850" y="110" width="140" height="80" rx="12" style="stroke:var(--brass)"/>
+        <text x="920" y="140" text-anchor="middle" class="node-title" style="font-size:11px">Later</text>
+        <text x="920" y="158" text-anchor="middle" class="node-desc" style="font-size:9.5px">Extracted services</text>
+        <text x="920" y="174" text-anchor="middle" class="node-desc" style="font-size:9.5px">only if scale demands it</text>
+        <path class="flow-arrow" d="M810,150 L845,150"/>
+      </svg>
+      <p class="foot-note">All items above are documented as explicit future considerations in the project's own integration roadmap — none are commitments with a timeline, and SSO/OAuth/MFA/refresh-token rotation remain explicitly out of scope.</p>
+    </div>
+  </section>
+
+  <!-- SLIDE 12 — CLOSING -->
+  <section class="slide">
+    <div class="corner c-tl"></div><div class="corner c-tr"></div><div class="corner c-bl"></div><div class="corner c-br"></div>
+    <div class="closing">
+      <svg width="90" height="90" viewBox="0 0 200 200">
+        <polygon points="100,30 160,65 160,135 100,170 40,135 40,65" fill="var(--ink-800)" stroke="var(--marigold)" stroke-width="2.4" stroke-linejoin="round"/>
+        <circle cx="100" cy="30" r="4.5" fill="var(--marigold)"/><circle cx="160" cy="65" r="4.5" fill="var(--marigold)"/>
+        <circle cx="160" cy="135" r="4.5" fill="var(--marigold)"/><circle cx="100" cy="170" r="4.5" fill="var(--marigold)"/>
+        <circle cx="40" cy="135" r="4.5" fill="var(--marigold)"/><circle cx="40" cy="65" r="4.5" fill="var(--marigold)"/>
+        <text x="100" y="107" text-anchor="middle" class="devanagari" style="font-size:22px; fill:var(--ivory); font-weight:600;">समग्र</text>
+      </svg>
+      <h2>One codebase, honestly described</h2>
+      <p>React + TypeScript on the front, layered Express + PostgreSQL on the back, one authorization model connecting both — with real gaps named, not hidden, and a clear, low-risk path forward.</p>
+    </div>
+  </section>
+
+  <nav class="deck-nav" aria-label="Slide navigation">
+    <button type="button" id="deckPrev" aria-label="Previous slide">&#8963;</button>
+    <div class="deck-dots" id="deckDots"></div>
+    <button type="button" id="deckNext" aria-label="Next slide">&#8964;</button>
+  </nav>
+
+  <script>
+    (function () {
+      var slides = Array.prototype.slice.call(document.querySelectorAll('section.slide'));
+      var dotsWrap = document.getElementById('deckDots');
+      var prevBtn = document.getElementById('deckPrev');
+      var nextBtn = document.getElementById('deckNext');
+      var current = 0;
+
+      slides.forEach(function (_, i) {
+        var dot = document.createElement('button');
+        dot.type = 'button';
+        dot.className = 'dot';
+        dot.setAttribute('aria-label', 'Go to slide ' + (i + 1));
+        dot.addEventListener('click', function () { goTo(i); });
+        dotsWrap.appendChild(dot);
+      });
+      var dots = Array.prototype.slice.call(dotsWrap.querySelectorAll('.dot'));
+
+      function render() {
+        slides.forEach(function (slide, i) {
+          slide.classList.toggle('active', i === current);
+          slide.classList.toggle('leaving', i < current);
+        });
+        dots.forEach(function (dot, i) { dot.classList.toggle('active', i === current); });
+        prevBtn.disabled = current === 0;
+        nextBtn.disabled = current === slides.length - 1;
+      }
+
+      function goTo(index) {
+        current = Math.max(0, Math.min(slides.length - 1, index));
+        render();
+      }
+
+      prevBtn.addEventListener('click', function () { goTo(current - 1); });
+      nextBtn.addEventListener('click', function () { goTo(current + 1); });
+
+      document.addEventListener('keydown', function (event) {
+        if (['ArrowRight', 'ArrowDown', 'PageDown', ' '].includes(event.key)) {
+          event.preventDefault();
+          goTo(current + 1);
+        } else if (['ArrowLeft', 'ArrowUp', 'PageUp'].includes(event.key)) {
+          event.preventDefault();
+          goTo(current - 1);
+        } else if (event.key === 'Home') {
+          goTo(0);
+        } else if (event.key === 'End') {
+          goTo(slides.length - 1);
+        }
+      });
+
+      var touchStartX = null;
+      document.addEventListener('touchstart', function (event) {
+        touchStartX = event.changedTouches[0].clientX;
+      });
+      document.addEventListener('touchend', function (event) {
+        if (touchStartX === null) return;
+        var deltaX = event.changedTouches[0].clientX - touchStartX;
+        if (Math.abs(deltaX) > 50) {
+          goTo(current + (deltaX < 0 ? 1 : -1));
+        }
+        touchStartX = null;
+      });
+
+      render();
+    })();
+  </script>
+</body>
+</html>

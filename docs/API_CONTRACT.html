@@ -1,0 +1,849 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Starter Kit API Contract</title>
+<style>
+  :root {
+    --primary: #0b5fff;
+    --primary-dark: #0842b0;
+    --bg: #f5f7fb;
+    --surface: #ffffff;
+    --border: #e2e6ee;
+    --text: #1a2333;
+    --text-secondary: #5b6472;
+    --get: #2e7d32;
+    --post: #0b5fff;
+    --put: #b06a00;
+    --delete: #c62828;
+    --code-bg: #0f1720;
+    --code-text: #e6edf3;
+    --radius: 10px;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+  }
+
+  header {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    color: #fff;
+    padding: 32px 40px;
+  }
+
+  header h1 {
+    margin: 0 0 6px 0;
+    font-size: 26px;
+    font-weight: 700;
+  }
+
+  header p {
+    margin: 0;
+    opacity: 0.9;
+    font-size: 14px;
+  }
+
+  .tabs {
+    display: flex;
+    gap: 8px;
+    padding: 16px 40px 0;
+    flex-wrap: wrap;
+  }
+
+  .tab-btn {
+    background: rgba(255, 255, 255, 0.14);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: #fff;
+    padding: 8px 16px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 120ms ease;
+  }
+
+  .tab-btn:hover {
+    background: rgba(255, 255, 255, 0.24);
+  }
+
+  .tab-btn.active {
+    background: #fff;
+    color: var(--primary-dark);
+  }
+
+  .container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 32px 24px 80px;
+  }
+
+  .section {
+    display: none;
+  }
+
+  .section.active {
+    display: block;
+  }
+
+  .section-intro {
+    color: var(--text-secondary);
+    font-size: 14px;
+    margin: 0 0 20px;
+  }
+
+  .base-url {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 18px;
+    margin-bottom: 24px;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .base-url code {
+    background: var(--code-bg);
+    color: var(--code-text);
+    padding: 3px 10px;
+    border-radius: 6px;
+    font-size: 13px;
+  }
+
+  h2.section-title {
+    font-size: 18px;
+    margin: 32px 0 12px;
+    font-weight: 700;
+  }
+
+  table.endpoint-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
+  }
+
+  table.endpoint-table thead {
+    background: #eef1f7;
+  }
+
+  table.endpoint-table th {
+    text-align: left;
+    padding: 12px 16px;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--text-secondary);
+    border-bottom: 1px solid var(--border);
+  }
+
+  table.endpoint-table td {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border);
+    font-size: 14px;
+    vertical-align: middle;
+  }
+
+  table.endpoint-table tbody tr {
+    cursor: pointer;
+    transition: background-color 120ms ease;
+  }
+
+  table.endpoint-table tbody tr:hover {
+    background-color: #f2f6ff;
+  }
+
+  table.endpoint-table tbody tr.active-row {
+    background-color: #e8f0ff;
+  }
+
+  table.endpoint-table tbody tr:last-child td {
+    border-bottom: none;
+  }
+
+  .method-badge {
+    display: inline-block;
+    min-width: 58px;
+    text-align: center;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: 0.02em;
+  }
+
+  .method-GET { background: var(--get); }
+  .method-POST { background: var(--post); }
+  .method-PUT { background: var(--put); }
+  .method-DELETE { background: var(--delete); }
+
+  .path {
+    font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+    font-size: 13.5px;
+    color: var(--text);
+  }
+
+  .row-hint {
+    color: var(--primary);
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  /* Detail card */
+  .detail-card {
+    margin-top: 28px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 0;
+    box-shadow: 0 4px 16px rgba(16, 24, 40, 0.08);
+    scroll-margin-top: 24px;
+    overflow: hidden;
+    display: none;
+  }
+
+  .detail-card.visible {
+    display: block;
+    animation: fadeIn 200ms ease;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .detail-header {
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    background: #fafbfd;
+  }
+
+  .detail-header .path {
+    font-size: 16px;
+    font-weight: 600;
+  }
+
+  .detail-header .desc {
+    width: 100%;
+    color: var(--text-secondary);
+    font-size: 13.5px;
+    margin-top: 4px;
+  }
+
+  .close-btn {
+    margin-left: auto;
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-size: 13px;
+    cursor: pointer;
+  }
+
+  .close-btn:hover {
+    background: #eef1f7;
+  }
+
+  .detail-body {
+    padding: 20px 24px 28px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+  }
+
+  @media (max-width: 760px) {
+    .detail-body { grid-template-columns: 1fr; }
+  }
+
+  .detail-block h3 {
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--text-secondary);
+    margin: 0 0 10px;
+  }
+
+  .param-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 14px;
+    font-size: 13px;
+  }
+
+  .param-table th, .param-table td {
+    text-align: left;
+    padding: 6px 8px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .param-table th {
+    color: var(--text-secondary);
+    font-weight: 600;
+  }
+
+  pre.code-block {
+    background: var(--code-bg);
+    color: var(--code-text);
+    padding: 14px 16px;
+    border-radius: 8px;
+    font-size: 12.5px;
+    line-height: 1.55;
+    overflow-x: auto;
+    margin: 0 0 14px;
+  }
+
+  .status-line {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+
+  .status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+  }
+
+  .status-2xx .status-dot { background: var(--get); }
+  .status-4xx .status-dot { background: var(--delete); }
+
+  footer {
+    text-align: center;
+    color: var(--text-secondary);
+    font-size: 12.5px;
+    padding: 24px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Starter Kit API Contract</h1>
+  <p>Frontend/backend contract reference for all features &mdash; Starter Kit</p>
+  <div class="tabs" id="tabs">
+    <button class="tab-btn" data-section="customers">Customers</button>
+    <button class="tab-btn" data-section="approvals">Approvals</button>
+  </div>
+</header>
+
+<div class="container">
+
+  <div class="base-url">
+    <strong>Base URL:</strong> <code>{VITE_API_BASE_URL}</code>
+    <span style="color: var(--text-secondary);">e.g. <code>http://localhost:3000/api</code></span>
+  </div>
+
+  <!-- ===================== CUSTOMERS ===================== -->
+  <section class="section" id="section-customers">
+    <p class="section-intro">Contract for the Customers feature (see <code>src/features/customers/api/</code>).</p>
+    <h2 class="section-title">Endpoints</h2>
+    <table class="endpoint-table" id="table-customers">
+      <thead>
+        <tr>
+          <th style="width: 90px;">Method</th>
+          <th style="width: 220px;">Endpoint</th>
+          <th>Description</th>
+          <th style="width: 90px;"></th>
+        </tr>
+      </thead>
+      <tbody><!-- rows injected by JS --></tbody>
+    </table>
+    <div class="detail-card" id="detailCard-customers"><!-- populated by JS on row click --></div>
+  </section>
+
+  <!-- ===================== APPROVALS ===================== -->
+  <section class="section" id="section-approvals">
+    <p class="section-intro">Contract for the Approvals feature (see <code>src/features/approvals/api/</code>).</p>
+    <h2 class="section-title">Endpoints</h2>
+    <table class="endpoint-table" id="table-approvals">
+      <thead>
+        <tr>
+          <th style="width: 90px;">Method</th>
+          <th style="width: 220px;">Endpoint</th>
+          <th>Description</th>
+          <th style="width: 90px;"></th>
+        </tr>
+      </thead>
+      <tbody><!-- rows injected by JS --></tbody>
+    </table>
+    <div class="detail-card" id="detailCard-approvals"><!-- populated by JS on row click --></div>
+  </section>
+
+  <!-- To document another feature, add a new <section class="section" id="section-{name}"> block above
+       following the same structure, add its endpoints to the FEATURES object below, and add a matching
+       <button class="tab-btn" data-section="{name}"> in the header tabs. Keep everything in this one file. -->
+
+</div>
+
+<footer>
+  Generated API contract documentation. Click any row in a table to view its request/response detail.
+</footer>
+
+<script>
+  const FEATURES = {
+    customers: [
+      {
+        id: "list",
+        method: "GET",
+        path: "/customers",
+        summary: "List customers",
+        description: "Returns all customers. Used by customersApi.list().",
+        pathParams: [],
+        queryParams: [],
+        requestBody: null,
+        responses: [
+          {
+            status: "200 OK",
+            type: "2xx",
+            body:
+`[
+  {
+    "id": "cus_001",
+    "name": "Ava Thompson",
+    "email": "ava.thompson@brightpeak.com",
+    "phone": "(415) 555-0132",
+    "company": "BrightPeak Media",
+    "status": "active",
+    "createdAt": "2025-11-02T09:15:00.000Z"
+  }
+]`
+          }
+        ]
+      },
+      {
+        id: "get",
+        method: "GET",
+        path: "/customers/{id}",
+        summary: "Get a customer",
+        description: "Returns a single customer by id. Used by customersApi.get(id).",
+        pathParams: [{ name: "id", type: "string", desc: "Customer ID, e.g. cus_001" }],
+        queryParams: [],
+        requestBody: null,
+        responses: [
+          {
+            status: "200 OK",
+            type: "2xx",
+            body:
+`{
+  "id": "cus_001",
+  "name": "Ava Thompson",
+  "email": "ava.thompson@brightpeak.com",
+  "phone": "(415) 555-0132",
+  "company": "BrightPeak Media",
+  "status": "active",
+  "createdAt": "2025-11-02T09:15:00.000Z"
+}`
+          },
+          {
+            status: "404 Not Found",
+            type: "4xx",
+            body:
+`{
+  "message": "Customer \\"cus_999\\" was not found"
+}`
+          }
+        ]
+      },
+      {
+        id: "create",
+        method: "POST",
+        path: "/customers",
+        summary: "Create a customer",
+        description: "Creates a new customer. Used by customersApi.create(input).",
+        pathParams: [],
+        queryParams: [],
+        requestBody:
+`{
+  "name": "Ava Thompson",
+  "email": "ava.thompson@brightpeak.com",
+  "phone": "(415) 555-0132",
+  "company": "BrightPeak Media",
+  "status": "lead"
+}`,
+        responses: [
+          {
+            status: "201 Created",
+            type: "2xx",
+            body:
+`{
+  "id": "cus_007",
+  "name": "Ava Thompson",
+  "email": "ava.thompson@brightpeak.com",
+  "phone": "(415) 555-0132",
+  "company": "BrightPeak Media",
+  "status": "lead",
+  "createdAt": "2026-08-23T10:12:00.000Z"
+}`
+          },
+          {
+            status: "400 Bad Request",
+            type: "4xx",
+            body:
+`{
+  "message": "\\"email\\" is required"
+}`
+          }
+        ]
+      },
+      {
+        id: "update",
+        method: "PUT",
+        path: "/customers/{id}",
+        summary: "Update a customer",
+        description: "Replaces a customer's editable fields. Used by customersApi.update(id, input).",
+        pathParams: [{ name: "id", type: "string", desc: "Customer ID, e.g. cus_001" }],
+        queryParams: [],
+        requestBody:
+`{
+  "name": "Ava Thompson",
+  "email": "ava.thompson@brightpeak.com",
+  "phone": "(415) 555-0199",
+  "company": "BrightPeak Media",
+  "status": "active"
+}`,
+        responses: [
+          {
+            status: "200 OK",
+            type: "2xx",
+            body:
+`{
+  "id": "cus_001",
+  "name": "Ava Thompson",
+  "email": "ava.thompson@brightpeak.com",
+  "phone": "(415) 555-0199",
+  "company": "BrightPeak Media",
+  "status": "active",
+  "createdAt": "2025-11-02T09:15:00.000Z"
+}`
+          },
+          {
+            status: "404 Not Found",
+            type: "4xx",
+            body:
+`{
+  "message": "Customer \\"cus_999\\" was not found"
+}`
+          }
+        ]
+      },
+      {
+        id: "remove",
+        method: "DELETE",
+        path: "/customers/{id}",
+        summary: "Delete a customer",
+        description: "Deletes a customer permanently. Used by customersApi.remove(id).",
+        pathParams: [{ name: "id", type: "string", desc: "Customer ID, e.g. cus_001" }],
+        queryParams: [],
+        requestBody: null,
+        responses: [
+          {
+            status: "204 No Content",
+            type: "2xx",
+            body: "(empty body)"
+          },
+          {
+            status: "404 Not Found",
+            type: "4xx",
+            body:
+`{
+  "message": "Customer \\"cus_999\\" was not found"
+}`
+          }
+        ]
+      }
+    ],
+
+    approvals: [
+      {
+        id: "list",
+        method: "GET",
+        path: "/approvals",
+        summary: "List approval requests",
+        description: "Returns all approval requests. Used by approvalsApi.getApprovals().",
+        pathParams: [],
+        queryParams: [],
+        requestBody: null,
+        responses: [
+          {
+            status: "200 OK",
+            type: "2xx",
+            body:
+`[
+  {
+    "id": "apr_001",
+    "title": "New laptop purchase",
+    "description": "MacBook Pro 16\\" for design team onboarding",
+    "type": "PURCHASE",
+    "requestedBy": { "id": "usr_010", "name": "Maya Chen" },
+    "approver": { "id": "usr_001", "name": "Daniel Ortiz" },
+    "amount": 2499,
+    "status": "PENDING",
+    "createdAt": "2026-08-18T14:22:00.000Z",
+    "updatedAt": "2026-08-18T14:22:00.000Z"
+  }
+]`
+          }
+        ]
+      },
+      {
+        id: "get",
+        method: "GET",
+        path: "/approvals/{id}",
+        summary: "Get an approval request",
+        description: "Returns a single approval request by id. Used by approvalsApi.getApproval(id).",
+        pathParams: [{ name: "id", type: "string", desc: "Approval ID, e.g. apr_001" }],
+        queryParams: [],
+        requestBody: null,
+        responses: [
+          {
+            status: "200 OK",
+            type: "2xx",
+            body:
+`{
+  "id": "apr_001",
+  "title": "New laptop purchase",
+  "description": "MacBook Pro 16\\" for design team onboarding",
+  "type": "PURCHASE",
+  "requestedBy": { "id": "usr_010", "name": "Maya Chen" },
+  "approver": { "id": "usr_001", "name": "Daniel Ortiz" },
+  "amount": 2499,
+  "status": "PENDING",
+  "createdAt": "2026-08-18T14:22:00.000Z",
+  "updatedAt": "2026-08-18T14:22:00.000Z"
+}`
+          },
+          {
+            status: "404 Not Found",
+            type: "4xx",
+            body:
+`{
+  "message": "Approval \\"apr_999\\" was not found"
+}`
+          }
+        ]
+      },
+      {
+        id: "approve",
+        method: "POST",
+        path: "/approvals/{id}/approve",
+        summary: "Approve a request",
+        description: "Marks an approval request as APPROVED, optionally with a comment. Used by approvalsApi.approveApproval(id, comment).",
+        pathParams: [{ name: "id", type: "string", desc: "Approval ID, e.g. apr_001" }],
+        queryParams: [],
+        requestBody:
+`{
+  "comment": "Approved — within Q3 hardware budget."
+}`,
+        responses: [
+          {
+            status: "200 OK",
+            type: "2xx",
+            body:
+`{
+  "id": "apr_001",
+  "title": "New laptop purchase",
+  "description": "MacBook Pro 16\\" for design team onboarding",
+  "type": "PURCHASE",
+  "requestedBy": { "id": "usr_010", "name": "Maya Chen" },
+  "approver": { "id": "usr_001", "name": "Daniel Ortiz" },
+  "amount": 2499,
+  "status": "APPROVED",
+  "comment": "Approved — within Q3 hardware budget.",
+  "createdAt": "2026-08-18T14:22:00.000Z",
+  "updatedAt": "2026-08-23T09:05:00.000Z"
+}`
+          },
+          {
+            status: "404 Not Found",
+            type: "4xx",
+            body:
+`{
+  "message": "Approval \\"apr_999\\" was not found"
+}`
+          }
+        ]
+      },
+      {
+        id: "reject",
+        method: "POST",
+        path: "/approvals/{id}/reject",
+        summary: "Reject a request",
+        description: "Marks an approval request as REJECTED, optionally with a comment. Used by approvalsApi.rejectApproval(id, comment).",
+        pathParams: [{ name: "id", type: "string", desc: "Approval ID, e.g. apr_001" }],
+        queryParams: [],
+        requestBody:
+`{
+  "comment": "Rejected — exceeds current hardware budget."
+}`,
+        responses: [
+          {
+            status: "200 OK",
+            type: "2xx",
+            body:
+`{
+  "id": "apr_001",
+  "title": "New laptop purchase",
+  "description": "MacBook Pro 16\\" for design team onboarding",
+  "type": "PURCHASE",
+  "requestedBy": { "id": "usr_010", "name": "Maya Chen" },
+  "approver": { "id": "usr_001", "name": "Daniel Ortiz" },
+  "amount": 2499,
+  "status": "REJECTED",
+  "comment": "Rejected — exceeds current hardware budget.",
+  "createdAt": "2026-08-18T14:22:00.000Z",
+  "updatedAt": "2026-08-23T09:05:00.000Z"
+}`
+          },
+          {
+            status: "404 Not Found",
+            type: "4xx",
+            body:
+`{
+  "message": "Approval \\"apr_999\\" was not found"
+}`
+          }
+        ]
+      }
+    ]
+  };
+
+  function paramTable(title, params) {
+    if (!params || params.length === 0) return "";
+    const rows = params.map(p => `
+      <tr>
+        <td><code>${p.name}</code></td>
+        <td>${p.type}</td>
+        <td>${p.desc}</td>
+      </tr>
+    `).join("");
+    return `
+      <h3>${title}</h3>
+      <table class="param-table">
+        <thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    `;
+  }
+
+  function escapeHtml(str) {
+    return String(str)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;");
+  }
+
+  function renderFeature(featureKey) {
+    const endpoints = FEATURES[featureKey];
+    const tbody = document.querySelector(`#table-${featureKey} tbody`);
+    const detailCard = document.getElementById(`detailCard-${featureKey}`);
+
+    tbody.innerHTML = endpoints.map(ep => `
+      <tr data-id="${ep.id}">
+        <td><span class="method-badge method-${ep.method}">${ep.method}</span></td>
+        <td class="path">${ep.path}</td>
+        <td>${ep.summary}</td>
+        <td class="row-hint">View details &rarr;</td>
+      </tr>
+    `).join("");
+
+    tbody.querySelectorAll("tr").forEach(row => {
+      row.addEventListener("click", () => showDetail(featureKey, row.dataset.id));
+    });
+  }
+
+  function showDetail(featureKey, id) {
+    const endpoints = FEATURES[featureKey];
+    const detailCard = document.getElementById(`detailCard-${featureKey}`);
+    const ep = endpoints.find(e => e.id === id);
+    if (!ep) return;
+
+    document.querySelectorAll(`#table-${featureKey} tbody tr`).forEach(row => {
+      row.classList.toggle("active-row", row.dataset.id === id);
+    });
+
+    const requestSection = `
+      <div class="detail-block">
+        ${paramTable("Path Parameters", ep.pathParams)}
+        ${paramTable("Query Parameters", ep.queryParams)}
+        <h3>Request Body</h3>
+        ${ep.requestBody
+          ? `<pre class="code-block">${escapeHtml(ep.requestBody)}</pre>`
+          : `<p style="color: var(--text-secondary); font-size: 13.5px;">No request body.</p>`}
+      </div>
+    `;
+
+    const responseSection = `
+      <div class="detail-block">
+        <h3>Response</h3>
+        ${ep.responses.map(r => `
+          <div class="status-line status-${r.type}">
+            <span class="status-dot"></span> ${r.status}
+          </div>
+          <pre class="code-block">${escapeHtml(r.body)}</pre>
+        `).join("")}
+      </div>
+    `;
+
+    detailCard.innerHTML = `
+      <div class="detail-header">
+        <span class="method-badge method-${ep.method}">${ep.method}</span>
+        <span class="path">${ep.path}</span>
+        <button class="close-btn" id="closeDetailBtn-${featureKey}">Close ✕</button>
+        <div class="desc">${ep.description}</div>
+      </div>
+      <div class="detail-body">
+        ${requestSection}
+        ${responseSection}
+      </div>
+    `;
+
+    detailCard.classList.add("visible");
+    document.getElementById(`closeDetailBtn-${featureKey}`).addEventListener("click", (evt) => {
+      evt.stopPropagation();
+      detailCard.classList.remove("visible");
+      document.querySelectorAll(`#table-${featureKey} tbody tr`).forEach(row => row.classList.remove("active-row"));
+    });
+
+    detailCard.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  }
+
+  function activateSection(featureKey) {
+    document.querySelectorAll(".tab-btn").forEach(btn => {
+      btn.classList.toggle("active", btn.dataset.section === featureKey);
+    });
+    document.querySelectorAll(".section").forEach(section => {
+      section.classList.toggle("active", section.id === `section-${featureKey}`);
+    });
+  }
+
+  document.querySelectorAll(".tab-btn").forEach(btn => {
+    btn.addEventListener("click", () => activateSection(btn.dataset.section));
+  });
+
+  Object.keys(FEATURES).forEach(renderFeature);
+  activateSection("customers");
+</script>
+
+</body>
+</html>

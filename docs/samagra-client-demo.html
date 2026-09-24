@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Samagra — Client Overview</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Archivo:wght@400;500;600;700;800&family=Sora:wght@600;700;800&family=Inter:wght@400;500;600&family=IBM+Plex+Sans+Devanagari:wght@500;600&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink-900:#0F1B2D; --ink-800:#16243A; --ink-700:#1E2F49;
+    --paper:#FBF7EC; --paper-line:#E4DEC9;
+    --marigold:#E8A33D; --marigold-deep:#C9812B; --brass:#8A6B33;
+    --ivory:#F4EFE2; --ink-text:#1D2433; --muted:#9AA7BB; --muted-ink:#7A7362;
+    --line-dark: rgba(244,239,226,0.16);
+  }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; height:100%; overflow:hidden; }
+  body{ font-family:'Archivo', sans-serif; background:var(--ink-900); }
+  h1,h2,h3,h4{ font-family:'Space Grotesk', sans-serif; font-weight:700; margin:0; letter-spacing:-0.01em; }
+  .devanagari{ font-family:'IBM Plex Sans Devanagari', sans-serif; }
+  .mono{ font-family:'IBM Plex Mono', monospace; }
+
+  section.slide{
+    height:100vh; width:100%; padding:118px 76px 56px;
+    display:flex; flex-direction:column;
+    position:absolute; inset:0; background:var(--ink-900); color:var(--ivory);
+    background-image:
+      linear-gradient(rgba(232,163,61,0.06) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(232,163,61,0.06) 1px, transparent 1px);
+    background-size:38px 38px;
+    overflow:hidden;
+    opacity:0; visibility:hidden; transform:translateX(24px);
+    transition:opacity 0.45s ease, transform 0.45s ease, visibility 0.45s;
+    z-index:1;
+  }
+  section.slide.active{ opacity:1; visibility:visible; transform:translateX(0); z-index:2; }
+  section.slide.leaving{ transform:translateX(-24px); }
+  section.slide.paper{
+    background-color:var(--paper); color:var(--ink-text);
+    background-image:linear-gradient(rgba(138,107,51,0.08) 1px, transparent 1px), linear-gradient(90deg, rgba(138,107,51,0.08) 1px, transparent 1px);
+  }
+
+  .deck-nav{
+    position:fixed; top:50%; right:28px; transform:translateY(-50%); z-index:20;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px;
+    font-family:'IBM Plex Mono', monospace;
+  }
+  .deck-nav button{
+    appearance:none; border:1px solid rgba(244,239,226,0.35); background:rgba(15,27,45,0.72);
+    color:var(--ivory); width:32px; height:32px; border-radius:50%; cursor:pointer;
+    display:flex; align-items:center; justify-content:center; font-size:15px; line-height:1;
+    transition:border-color 0.2s, background 0.2s;
+  }
+  .deck-nav button:hover{ border-color:var(--marigold); background:rgba(15,27,45,0.9); }
+  .deck-nav button:disabled{ opacity:0.3; cursor:default; }
+  .deck-dots{ display:flex; flex-direction:column; gap:7px; padding:6px 0; }
+  .deck-dots .dot{
+    width:7px; height:7px; border-radius:50%; background:rgba(244,239,226,0.3);
+    border:1px solid transparent; cursor:pointer; padding:0; appearance:none;
+    transition:background 0.2s, transform 0.2s;
+  }
+  .deck-dots .dot.active{ background:var(--marigold); transform:scale(1.3); }
+
+  .corner{ position:absolute; width:20px; height:20px; border-color:var(--marigold); opacity:0.55; z-index:5; }
+  .c-tl{ top:24px; left:24px; border-top:1px solid; border-left:1px solid; }
+  .c-tr{ top:24px; right:24px; border-top:1px solid; border-right:1px solid; }
+  .c-bl{ bottom:24px; left:24px; border-bottom:1px solid; border-left:1px solid; }
+  .c-br{ bottom:24px; right:24px; border-bottom:1px solid; border-right:1px solid; }
+  .paper .corner{ border-color:var(--brass); opacity:0.4; }
+
+  .brandmark{ position:absolute; top:32px; left:64px; display:flex; align-items:baseline; gap:8px; z-index:6; }
+  .brandmark .m{ font-family:'Space Grotesk', sans-serif; font-weight:700; font-size:1.05rem; }
+  .brandmark .d{ color:var(--marigold); font-size:0.88rem; }
+  .paper .brandmark .m{ color:var(--ink-900); }
+  .num{ position:absolute; top:34px; right:64px; font-family:'IBM Plex Mono', monospace; font-size:0.7rem; color:var(--muted); z-index:6; letter-spacing:0.04em; }
+  .paper .num{ color:var(--muted-ink); }
+
+  .head{ text-align:center; flex-shrink:0; z-index:3; position:relative; margin-bottom:8px; }
+  .eyebrow{ font-family:'IBM Plex Mono', monospace; font-size:0.74rem; letter-spacing:0.14em; text-transform:uppercase; color:var(--marigold); margin-bottom:12px; font-weight:600; }
+  h2.title{ font-size:2.5rem; line-height:1.12; }
+  .paper h2.title{ color:var(--ink-900); }
+  p.lead{ font-size:1.05rem; color:var(--muted); max-width:700px; margin:14px auto 0; line-height:1.55; font-weight:400; }
+  .paper p.lead{ color:var(--muted-ink); }
+
+  .body-wrap{ position:relative; z-index:3; flex:1; min-height:0; display:flex; flex-direction:column; justify-content:center; }
+
+  .node-title{ font-family:'Space Grotesk', sans-serif; font-weight:700; font-size:14px; fill:var(--ivory); }
+  .node-desc{ font-family:'Archivo', sans-serif; font-size:11px; fill:var(--muted); }
+  .paper .node-title{ fill:var(--ink-900); }
+  .paper .node-desc{ fill:var(--muted-ink); }
+  .badge-ring{ fill:var(--ink-800); stroke:var(--marigold); stroke-width:1.8; }
+  .core-ring{ fill:var(--ink-800); stroke:var(--marigold); stroke-width:2.2; stroke-linejoin:round; }
+  .core-dot{ fill:var(--marigold); transition:filter 0.25s ease; }
+  .orbit{ fill:none; stroke:var(--brass); stroke-width:1; stroke-dasharray:2 5; opacity:0.5; }
+  .spoke-line{ stroke:var(--brass); stroke-width:1.3; stroke-dasharray:3 4; opacity:0.75; }
+  .node, .core-group{ cursor:default; transform-box:fill-box; transform-origin:center; transition:transform 0.25s ease; }
+  .node:hover{ transform:scale(1.1); }
+  .core-group:hover{ transform:scale(1.06); }
+  .node:hover .badge-ring{ filter:drop-shadow(0 0 8px rgba(232,163,61,0.6)); }
+  .core-group:hover .core-ring{ filter:drop-shadow(0 0 12px rgba(232,163,61,0.75)); }
+  .core-group:hover .core-dot{ filter:drop-shadow(0 0 5px rgba(232,163,61,0.9)); }
+
+  /* benefit cards */
+  .card-grid{ display:grid; grid-template-columns:repeat(3, 1fr); gap:22px; }
+  .card-grid.g4{ grid-template-columns:repeat(4, 1fr); }
+  .b-card{
+    background:rgba(255,255,255,0.6); border:1px solid var(--paper-line); border-radius:16px;
+    padding:24px 22px; display:flex; flex-direction:column; gap:12px;
+    transition:transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  .b-card:hover{ transform:translateY(-5px); box-shadow:0 14px 30px rgba(138,107,51,0.2); }
+  .b-card .ic{
+    width:46px; height:46px; border-radius:12px; background:var(--ink-900); color:var(--marigold);
+    display:flex; align-items:center; justify-content:center; flex-shrink:0;
+  }
+  .b-card .ic svg{ width:24px; height:24px; }
+  .b-card h4{ font-size:1.15rem; font-weight:700; color:var(--ink-900); margin:0; }
+  .b-card ul{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:7px; }
+  .b-card li{ font-size:0.86rem; color:var(--muted-ink); line-height:1.45; padding-left:15px; position:relative; }
+  .b-card li::before{ content:'•'; position:absolute; left:0; color:var(--marigold); font-weight:700; }
+
+  ul.pt{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:16px; }
+  ul.pt li{ font-size:1.05rem; line-height:1.55; padding-left:26px; position:relative; }
+  ul.pt li::before{ content:'✓'; position:absolute; left:0; color:var(--marigold); font-weight:700; }
+  .paper ul.pt li::before{ color:var(--brass); }
+  ul.pt li b{ font-weight:700; }
+
+  .two-col{ display:grid; grid-template-columns:1fr 1fr; gap:48px; align-items:center; flex:1; min-height:0; }
+
+  .before-after{ display:grid; grid-template-columns:1fr auto 1fr; gap:28px; align-items:center; }
+  .ba-panel{ border-radius:18px; padding:28px 26px; }
+  .ba-panel.before{ background:rgba(217,113,78,0.1); border:1px solid rgba(217,113,78,0.35); }
+  .ba-panel.after{ background:rgba(95,174,114,0.1); border:1px solid rgba(95,174,114,0.4); }
+  .ba-panel h4{ font-family:'IBM Plex Mono', monospace; font-size:0.76rem; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:16px; font-weight:600; }
+  .ba-panel.before h4{ color:#E08A66; }
+  .ba-panel.after h4{ color:#6FBE85; }
+  .ba-panel ul{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:11px; }
+  .ba-panel li{ font-size:0.92rem; line-height:1.5; }
+  .ba-arrow{ font-size:1.8rem; color:var(--marigold); font-weight:700; }
+
+  .cover{ display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; text-align:center; }
+  .cover h1{ font-family:'Sora', sans-serif; font-size:4rem; letter-spacing:-0.02em; }
+  .cover .tagline{ font-family:'Inter', sans-serif; font-size:1.2rem; color:var(--muted); margin-top:22px; max-width:660px; line-height:1.6; font-weight:400; }
+  .cover .meta{ margin-top:40px; display:flex; gap:28px; font-family:'IBM Plex Mono', monospace; font-size:0.76rem; color:var(--muted); flex-wrap:wrap; justify-content:center; }
+  .cover .meta span{ display:flex; align-items:center; gap:7px; }
+  .cover .meta i{ width:5px; height:5px; border-radius:50%; background:var(--marigold); display:inline-block; }
+
+  .closing{ display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; text-align:center; }
+  .closing h2{ font-size:2.7rem; }
+  .closing p{ color:var(--muted); max-width:580px; margin-top:16px; line-height:1.6; font-size:1.05rem; }
+  .cta-row{ display:flex; gap:18px; margin-top:34px; }
+  .btn{ display:inline-flex; align-items:center; gap:8px; padding:14px 30px; border-radius:6px; font-size:0.98rem; font-weight:700; text-decoration:none; border:1px solid transparent; font-family:'Space Grotesk', sans-serif; }
+  .btn-primary{ background:var(--marigold); color:var(--ink-900); }
+  .btn-ghost{ border-color:var(--line-dark); color:var(--ivory); background:transparent; }
+</style>
+</head>
+<body>
+
+<svg style="position:absolute;width:0;height:0" aria-hidden="true">
+  <defs>
+    <symbol id="i-key" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="4"/><path d="M11.2 10.8L20 19.5M16.3 15.6l2-2M13.3 18.6l2-2"/></g></symbol>
+    <symbol id="i-approve" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3z"/><path d="M9 12l2 2 4-4"/></g></symbol>
+    <symbol id="i-reports" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V11M10 20V4M16 20v-6M3 20h18"/></g></symbol>
+    <symbol id="i-bell" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.2a5 5 0 0 0-5 5v3.3c0 1-.4 2-1.1 2.7L4.5 16h15l-1.4-1.8a4 4 0 0 1-1.1-2.7V8.2a5 5 0 0 0-5-5z"/><path d="M9.5 19a2.5 2.5 0 0 0 5 0"/></g></symbol>
+    <symbol id="i-audit" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5h12M4 9.5h9M4 13.5h6"/><circle cx="16" cy="15.5" r="3.1"/><path d="M18.3 17.8L21 20.5"/></g></symbol>
+    <symbol id="i-users" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="4" width="17" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M6 16c.4-1.8 1.6-3 3-3s2.6 1.2 3 3"/><path d="M14 8h4M14 12h4"/></g></symbol>
+    <symbol id="i-globe" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><ellipse cx="12" cy="12" rx="4" ry="9"/><path d="M3 12h18"/></g></symbol>
+    <symbol id="i-dashboard" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><rect x="3" y="3" width="8" height="8" rx="1.3"/><rect x="13" y="3" width="8" height="5" rx="1.3"/><rect x="13" y="10" width="8" height="11" rx="1.3"/><rect x="3" y="13" width="8" height="8" rx="1.3"/></g></symbol>
+    <symbol id="i-shield" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3z"/><path d="M12 8v5"/><circle cx="12" cy="15.6" r="0.6" fill="currentColor" stroke="none"/></g></symbol>
+    <symbol id="i-grow" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 18l6-6 4 4 6-8"/><path d="M15 8h5v5"/></g></symbol>
+    <symbol id="i-puzzle" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="M9 4h3v2.2a1.6 1.6 0 0 0 3.1 0V4H18v3.7a1.6 1.6 0 0 0 0 3.1V14h-2.2a1.6 1.6 0 0 0 0 3.1V20H12v-2.2a1.6 1.6 0 0 0-3.1 0V20H6v-3h-2v-3h2.2a1.6 1.6 0 0 0 0-3.1V9H4V6h2v-2h3z"/></g></symbol>
+  </defs>
+</svg>
+
+  <!-- SLIDE 1 — COVER -->
+  <section class="slide" style="padding-top:0; justify-content:center;">
+    <div class="corner c-tl"></div><div class="corner c-tr"></div><div class="corner c-bl"></div><div class="corner c-br"></div>
+    <div class="cover">
+      <svg width="130" height="130" viewBox="0 0 200 200">
+        <polygon points="100,30 160,65 160,135 100,170 40,135 40,65" fill="var(--ink-800)" stroke="var(--marigold)" stroke-width="2.4" stroke-linejoin="round"/>
+        <circle cx="100" cy="30" r="4.5" fill="var(--marigold)"/><circle cx="160" cy="65" r="4.5" fill="var(--marigold)"/>
+        <circle cx="160" cy="135" r="4.5" fill="var(--marigold)"/><circle cx="100" cy="170" r="4.5" fill="var(--marigold)"/>
+        <circle cx="40" cy="135" r="4.5" fill="var(--marigold)"/><circle cx="40" cy="65" r="4.5" fill="var(--marigold)"/>
+        <text x="100" y="107" text-anchor="middle" class="devanagari" style="font-size:26px; fill:var(--ivory); font-weight:600;">समग्र</text>
+      </svg>
+      <h1>Samagra</h1>
+      <div class="tagline">One connected system to run your day-to-day operations — who can do what, what needs approval, what's happening across your business, and proof of it all — instead of five disconnected tools stitched together with spreadsheets.</div>
+      <div class="meta">
+        <span><i></i>Built for how your teams actually work</span>
+        <span><i></i>Secure by default</span>
+        <span><i></i>Grows with your business</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 2 — THE PROBLEM, BEFORE/AFTER -->
+  <section class="slide">
+    <div class="corner c-tl"></div><div class="corner c-tr"></div><div class="corner c-bl"></div><div class="corner c-br"></div>
+    <div class="brandmark"><span class="m">Samagra</span><span class="d devanagari">समग्र</span></div>
+    <div class="num">01 / 07</div>
+    <div class="head">
+      <div class="eyebrow">The Problem We Solve</div>
+      <h2 class="title">Most businesses run on disconnected tools</h2>
+      <p class="lead">Spreadsheets for approvals, WhatsApp for updates, email for reports, and no single place to see who has access to what.</p>
+    </div>
+    <div class="body-wrap">
+      <div class="before-after">
+        <div class="ba-panel before">
+          <h4>Without Samagra</h4>
+          <ul>
+            <li>Approvals chase people over email and chat</li>
+            <li>No clear record of who approved what, or when</li>
+            <li>Reports are manually assembled, hours before a meeting</li>
+            <li>Anyone can technically access anything</li>
+          </ul>
+        </div>
+        <div class="ba-arrow">→</div>
+        <div class="ba-panel after">
+          <h4>With Samagra</h4>
+          <ul>
+            <li>Approvals move through a clear, trackable workflow</li>
+            <li>Every decision is logged automatically, with who and when</li>
+            <li>Reports generate on demand, ready in minutes</li>
+            <li>Every person only sees and does what their role allows</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 3 — SIX MODULES, ONE SYSTEM -->
+  <section class="slide">
+    <div class="corner c-tl"></div><div class="corner c-tr"></div><div class="corner c-bl"></div><div class="corner c-br"></div>
+    <div class="brandmark"><span class="m">Samagra</span><span class="d devanagari">समग्र</span></div>
+    <div class="num">02 / 07</div>
+    <div class="head">
+      <div class="eyebrow">What's Inside</div>
+      <h2 class="title">Six capabilities, working together as one system</h2>
+      <p class="lead">Not six separate apps you have to stitch together — one system where every part already knows about the others.</p>
+    </div>
+    <div class="body-wrap">
+      <svg viewBox="0 0 1000 520" width="100%" style="max-height:60vh;">
+        <circle class="orbit" cx="500" cy="270" r="205"/>
+        <line class="spoke-line" x1="500" y1="270" x2="500" y2="105"/>
+        <line class="spoke-line" x1="500" y1="270" x2="665" y2="185"/>
+        <line class="spoke-line" x1="500" y1="270" x2="665" y2="355"/>
+        <line class="spoke-line" x1="500" y1="270" x2="500" y2="435"/>
+        <line class="spoke-line" x1="500" y1="270" x2="335" y2="355"/>
+        <line class="spoke-line" x1="500" y1="270" x2="335" y2="185"/>
+
+        <g class="core-group">
+          <polygon class="core-ring" points="500,218 544,244 544,296 500,322 456,296 456,244"/>
+          <circle class="core-dot" cx="500" cy="218" r="4"/><circle class="core-dot" cx="544" cy="244" r="4"/>
+          <circle class="core-dot" cx="544" cy="296" r="4"/><circle class="core-dot" cx="500" cy="322" r="4"/>
+          <circle class="core-dot" cx="456" cy="296" r="4"/><circle class="core-dot" cx="456" cy="244" r="4"/>
+          <text x="500" y="264" text-anchor="middle" class="node-title devanagari" style="font-size:19px;">समग्र</text>
+          <text x="500" y="282" text-anchor="middle" class="node-desc">One connected system</text>
+        </g>
+
+        <g class="node">
+          <circle class="badge-ring" cx="500" cy="85" r="32"/>
+          <use href="#i-users" x="485" y="70" width="30" height="30" style="color:var(--marigold)"/>
+        </g>
+        <text x="500" y="138" text-anchor="middle" class="node-title">People &amp; Access</text>
+        <text x="500" y="156" text-anchor="middle" class="node-desc">Who's on your team, what they can do</text>
+
+        <g class="node">
+          <circle class="badge-ring" cx="690" cy="185" r="32"/>
+          <use href="#i-approve" x="675" y="170" width="30" height="30" style="color:var(--marigold)"/>
+        </g>
+        <text x="690" y="238" text-anchor="middle" class="node-title">Approvals</text>
+        <text x="690" y="256" text-anchor="middle" class="node-desc">Requests routed to the right person</text>
+
+        <g class="node">
+          <circle class="badge-ring" cx="690" cy="365" r="32"/>
+          <use href="#i-reports" x="675" y="350" width="30" height="30" style="color:var(--marigold)"/>
+        </g>
+        <text x="690" y="418" text-anchor="middle" class="node-title">Reports</text>
+        <text x="690" y="436" text-anchor="middle" class="node-desc">On-demand insight, ready to share</text>
+
+        <g class="node">
+          <circle class="badge-ring" cx="500" cy="465" r="32"/>
+          <use href="#i-audit" x="485" y="450" width="30" height="30" style="color:var(--marigold)"/>
+        </g>
+        <text x="500" y="16" class="node-desc" opacity="0"> </text>
+        <text x="500" y="512" text-anchor="middle" class="node-title">Audit Trail</text>
+
+        <g class="node">
+          <circle class="badge-ring" cx="310" cy="365" r="32"/>
+          <use href="#i-bell" x="295" y="350" width="30" height="30" style="color:var(--marigold)"/>
+        </g>
+        <text x="310" y="418" text-anchor="middle" class="node-title">Notifications</text>
+        <text x="310" y="436" text-anchor="middle" class="node-desc">Nothing important gets missed</text>
+
+        <g class="node">
+          <circle class="badge-ring" cx="310" cy="185" r="32"/>
+          <use href="#i-globe" x="295" y="170" width="30" height="30" style="color:var(--marigold)"/>
+        </g>
+        <text x="310" y="238" text-anchor="middle" class="node-title">Multi-language</text>
+        <text x="310" y="256" text-anchor="middle" class="node-desc">Your team, in their own language</text>
+      </svg>
+    </div>
+  </section>
+
+  <!-- SLIDE 4 — MERGED FEATURES -->
+  <section class="slide paper">
+    <div class="corner c-tl"></div><div class="corner c-tr"></div><div class="corner c-bl"></div><div class="corner c-br"></div>
+    <div class="brandmark"><span class="m">Samagra</span><span class="d devanagari">समग्र</span></div>
+    <div class="num">03 / 07</div>
+    <div class="head">
+      <div class="eyebrow">Everything Your Team Needs</div>
+      <h2 class="title">Four everyday jobs, handled in one place</h2>
+      <p class="lead">Access, approvals, reporting and staying informed — the four things every team does constantly, built as one experience.</p>
+    </div>
+    <div class="body-wrap">
+      <div class="card-grid g4">
+        <div class="b-card">
+          <div class="ic"><svg><use href="#i-users"/></svg></div>
+          <h4>People &amp; Access</h4>
+          <ul>
+            <li>Everyone sees only what their role allows</li>
+            <li>One directory for your whole team and customers</li>
+          </ul>
+        </div>
+        <div class="b-card">
+          <div class="ic"><svg><use href="#i-approve"/></svg></div>
+          <h4>Approvals</h4>
+          <ul>
+            <li>Requests routed straight to the right approver</li>
+            <li>Every decision logged automatically</li>
+          </ul>
+        </div>
+        <div class="b-card">
+          <div class="ic"><svg><use href="#i-reports"/></svg></div>
+          <h4>Reports &amp; Insight</h4>
+          <ul>
+            <li>One-click reports, ready to download in minutes</li>
+            <li>A live dashboard of what's happening right now</li>
+          </ul>
+        </div>
+        <div class="b-card">
+          <div class="ic"><svg><use href="#i-bell"/></svg></div>
+          <h4>Stay Informed</h4>
+          <ul>
+            <li>In-app alerts for anything needing attention</li>
+            <li>Full activity history, in English or Kannada</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 5 — WHY THIS ARCHITECTURE MATTERS -->
+  <section class="slide">
+    <div class="corner c-tl"></div><div class="corner c-tr"></div><div class="corner c-bl"></div><div class="corner c-br"></div>
+    <div class="brandmark"><span class="m">Samagra</span><span class="d devanagari">समग्र</span></div>
+    <div class="num">04 / 07</div>
+    <div class="head">
+      <div class="eyebrow">Why It's Built This Way</div>
+      <h2 class="title">The foundation matters as much as the features</h2>
+      <p class="lead">A well-built foundation is what lets us keep adding features quickly without breaking what already works — and what keeps your data safe.</p>
+    </div>
+    <div class="body-wrap">
+      <div class="card-grid g4">
+        <div class="b-card" style="background:rgba(255,255,255,0.06); border-color:var(--line-dark);">
+          <div class="ic"><svg><use href="#i-shield"/></svg></div>
+          <h4 style="color:var(--ivory)">Secure by default</h4>
+          <ul style="--x:1"><li style="color:var(--muted)">Passwords never stored in plain form, every login protected</li></ul>
+        </div>
+        <div class="b-card" style="background:rgba(255,255,255,0.06); border-color:var(--line-dark);">
+          <div class="ic"><svg><use href="#i-puzzle"/></svg></div>
+          <h4 style="color:var(--ivory)">Modular</h4>
+          <ul><li style="color:var(--muted)">Each capability is self-contained, so new ones plug in cleanly</li></ul>
+        </div>
+        <div class="b-card" style="background:rgba(255,255,255,0.06); border-color:var(--line-dark);">
+          <div class="ic"><svg><use href="#i-key"/></svg></div>
+          <h4 style="color:var(--ivory)">One access model</h4>
+          <ul><li style="color:var(--muted)">Roles are defined once and enforced everywhere, no exceptions</li></ul>
+        </div>
+        <div class="b-card" style="background:rgba(255,255,255,0.06); border-color:var(--line-dark);">
+          <div class="ic"><svg><use href="#i-grow"/></svg></div>
+          <h4 style="color:var(--ivory)">Built to grow</h4>
+          <ul><li style="color:var(--muted)">Scales from one team to a whole organization, no rebuild</li></ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 6 — ROADMAP -->
+  <section class="slide">
+    <div class="corner c-tl"></div><div class="corner c-tr"></div><div class="corner c-bl"></div><div class="corner c-br"></div>
+    <div class="brandmark"><span class="m">Samagra</span><span class="d devanagari">समग्र</span></div>
+    <div class="num">05 / 07</div>
+    <div class="head">
+      <div class="eyebrow">What's Next</div>
+      <h2 class="title">This is the foundation — here's where it's headed</h2>
+      <p class="lead">Every capability shown today is live. These are the natural next steps, building on the same foundation.</p>
+    </div>
+    <div class="body-wrap">
+      <ul class="pt" style="max-width:680px; margin:0 auto;">
+        <li><b>Tighter access control</b> across every part of the system as we harden it for wider rollout.</li>
+        <li><b>Faster, larger reports</b> via a dedicated background process, so reporting never competes with daily use.</li>
+        <li><b>More languages</b>, added the same way English and Kannada were.</li>
+        <li><b>Cloud deployment</b>, when you're ready to move beyond a single server.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- SLIDE 7 — CLOSING -->
+  <section class="slide" style="padding-top:0; justify-content:center;">
+    <div class="corner c-tl"></div><div class="corner c-tr"></div><div class="corner c-bl"></div><div class="corner c-br"></div>
+    <div class="closing">
+      <svg width="90" height="90" viewBox="0 0 200 200">
+        <polygon points="100,30 160,65 160,135 100,170 40,135 40,65" fill="var(--ink-800)" stroke="var(--marigold)" stroke-width="2.4" stroke-linejoin="round"/>
+        <circle cx="100" cy="30" r="4.5" fill="var(--marigold)"/><circle cx="160" cy="65" r="4.5" fill="var(--marigold)"/>
+        <circle cx="160" cy="135" r="4.5" fill="var(--marigold)"/><circle cx="100" cy="170" r="4.5" fill="var(--marigold)"/>
+        <circle cx="40" cy="135" r="4.5" fill="var(--marigold)"/><circle cx="40" cy="65" r="4.5" fill="var(--marigold)"/>
+        <text x="100" y="107" text-anchor="middle" class="devanagari" style="font-size:22px; fill:var(--ivory); font-weight:600;">समग्र</text>
+      </svg>
+      <h2>One system for the whole business</h2>
+      <p>Samagra — "the whole" — because your people, your approvals, your reports and your records should live in one place, not six.</p>
+      <div class="cta-row">
+        <a href="#" class="btn btn-primary">Book a walkthrough</a>
+        <a href="#" class="btn btn-ghost">See pricing</a>
+      </div>
+    </div>
+  </section>
+
+  <nav class="deck-nav" aria-label="Slide navigation">
+    <button type="button" id="deckPrev" aria-label="Previous slide">&#8963;</button>
+    <div class="deck-dots" id="deckDots"></div>
+    <button type="button" id="deckNext" aria-label="Next slide">&#8964;</button>
+  </nav>
+
+  <script>
+    (function () {
+      var slides = Array.prototype.slice.call(document.querySelectorAll('section.slide'));
+      var dotsWrap = document.getElementById('deckDots');
+      var prevBtn = document.getElementById('deckPrev');
+      var nextBtn = document.getElementById('deckNext');
+      var current = 0;
+
+      slides.forEach(function (_, i) {
+        var dot = document.createElement('button');
+        dot.type = 'button';
+        dot.className = 'dot';
+        dot.setAttribute('aria-label', 'Go to slide ' + (i + 1));
+        dot.addEventListener('click', function () { goTo(i); });
+        dotsWrap.appendChild(dot);
+      });
+      var dots = Array.prototype.slice.call(dotsWrap.querySelectorAll('.dot'));
+
+      function render() {
+        slides.forEach(function (slide, i) {
+          slide.classList.toggle('active', i === current);
+          slide.classList.toggle('leaving', i < current);
+        });
+        dots.forEach(function (dot, i) { dot.classList.toggle('active', i === current); });
+        prevBtn.disabled = current === 0;
+        nextBtn.disabled = current === slides.length - 1;
+      }
+
+      function goTo(index) {
+        current = Math.max(0, Math.min(slides.length - 1, index));
+        render();
+      }
+
+      prevBtn.addEventListener('click', function () { goTo(current - 1); });
+      nextBtn.addEventListener('click', function () { goTo(current + 1); });
+
+      document.addEventListener('keydown', function (event) {
+        if (['ArrowRight', 'ArrowDown', 'PageDown', ' '].includes(event.key)) {
+          event.preventDefault();
+          goTo(current + 1);
+        } else if (['ArrowLeft', 'ArrowUp', 'PageUp'].includes(event.key)) {
+          event.preventDefault();
+          goTo(current - 1);
+        } else if (event.key === 'Home') {
+          goTo(0);
+        } else if (event.key === 'End') {
+          goTo(slides.length - 1);
+        }
+      });
+
+      var touchStartX = null;
+      document.addEventListener('touchstart', function (event) {
+        touchStartX = event.changedTouches[0].clientX;
+      });
+      document.addEventListener('touchend', function (event) {
+        if (touchStartX === null) return;
+        var deltaX = event.changedTouches[0].clientX - touchStartX;
+        if (Math.abs(deltaX) > 50) {
+          goTo(current + (deltaX < 0 ? 1 : -1));
+        }
+        touchStartX = null;
+      });
+
+      render();
+    })();
+  </script>
+</body>
+</html>
