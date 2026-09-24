@@ -1,0 +1,8 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.getHealth = getHealth;
+const healthService_1 = require("../services/healthService");
+function getHealth(_req, res) {
+    res.status(200).json((0, healthService_1.getHealthStatus)());
+}
+//# sourceMappingURL=healthController.js.map

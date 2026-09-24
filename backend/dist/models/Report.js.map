@@ -1,0 +1,1 @@
+{"version":3,"file":"Report.js","sourceRoot":"","sources":["../../src/models/Report.ts"],"names":[],"mappings":";;;AAuBa,QAAA,kBAAkB,GAAuB;IACpD;QACE,EAAE,EAAE,cAAc;QAClB,IAAI,EAAE,mBAAmB;QACzB,WAAW,EAAE,uCAAuC;QACpD,IAAI,EAAE,UAAU;KACjB;IACD;QACE,EAAE,EAAE,UAAU;QACd,IAAI,EAAE,wBAAwB;QAC9B,WAAW,EAAE,uCAAuC;QACpD,IAAI,EAAE,MAAM;KACb;CACF,CAAC"}

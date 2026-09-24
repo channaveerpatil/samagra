@@ -1,0 +1,1 @@
+{"version":3,"file":"notFoundHandler.js","sourceRoot":"","sources":["../../src/middleware/notFoundHandler.ts"],"names":[],"mappings":";;AAEA,0CAMC;AAND,SAAgB,eAAe,CAAC,GAAY,EAAE,GAAa;IACzD,GAAG,CAAC,MAAM,CAAC,GAAG,CAAC,CAAC,IAAI,CAAC;QACnB,KAAK,EAAE;YACL,OAAO,EAAE,oBAAoB,GAAG,CAAC,MAAM,IAAI,GAAG,CAAC,WAAW,EAAE;SAC7D;KACF,CAAC,CAAC;AACL,CAAC"}
