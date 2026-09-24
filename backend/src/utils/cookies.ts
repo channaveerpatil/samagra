@@ -24,7 +24,12 @@ export function buildSetCookie(
   value: string,
   options: { maxAgeMs?: number; secure: boolean },
 ): string {
-  const parts = [`${name}=${encodeURIComponent(value)}`, 'Path=/', 'HttpOnly', 'SameSite=Lax'];
+  const parts = [
+    `${name}=${encodeURIComponent(value)}`,
+    'Path=/',
+    'HttpOnly',
+    `SameSite=${options.secure ? 'None' : 'Lax'}`,
+  ];
   if (options.maxAgeMs !== undefined) {
     parts.push(`Max-Age=${Math.floor(options.maxAgeMs / 1000)}`);
   }
@@ -35,7 +40,13 @@ export function buildSetCookie(
 }
 
 export function buildClearCookie(name: string, options: { secure: boolean }): string {
-  const parts = [`${name}=`, 'Path=/', 'HttpOnly', 'SameSite=Lax', 'Max-Age=0'];
+  const parts = [
+    `${name}=`,
+    'Path=/',
+    'HttpOnly',
+    `SameSite=${options.secure ? 'None' : 'Lax'}`,
+    'Max-Age=0',
+  ];
   if (options.secure) {
     parts.push('Secure');
   }
